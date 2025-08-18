@@ -1,0 +1,86 @@
+[package]
+name = "xfg-stark"
+version = "0.1.0"
+edition = "2021"
+authors = ["XFG STARK Team"]
+description = "XFG STARK Proof Implementation"
+
+[features]
+default = ["std"]
+std = []
+no_std = []
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+bincode = "1.3"
+sha3 = "0.10"
+sha2 = "0.10"
+hex = "0.4"
+rand = "0.8"
+chrono = { version = "0.4", features = ["serde"] }
+
+# Winterfell framework dependencies
+winterfell = "0.8"
+winter-crypto = "0.8"
+winter-math = "0.8"
+winter-utils = "0.8"
+
+# Additional cryptographic dependencies
+blake3 = "1.8"
+ripemd = "0.1"
+anyhow = "1.0"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+quickcheck = "1.0"
+
+[[example]]
+name = "winterfell_integration_example"
+path = "examples/winterfell_integration_example.rs"
+
+[[example]]
+name = "simple_winterfell_demo"
+path = "examples/simple_winterfell_demo.rs"
+
+[[example]]
+name = "xfg_burn_proof"
+path = "examples/xfg_burn_proof.rs"
+
+[[example]]
+name = "xfg_burn_proof_with_rpc"
+path = "examples/xfg_burn_proof_with_rpc.rs"
+
+[[example]]
+name = "xfg_burn_proof_08"
+path = "examples/xfg_burn_proof_08.rs"
+
+[[example]]
+name = "xfg_burn_proof_with_recipient"
+path = "examples/xfg_burn_proof_with_recipient.rs"
+
+[[example]]
+name = "xfg_burn_proof_fixed"
+path = "examples/xfg_burn_proof_fixed.rs"
+
+[[example]]
+name = "xfg_burn_proof_complete"
+path = "examples/xfg_burn_proof_complete.rs"
+
+[[example]]
+name = "xfg_burn_proof_from_file"
+path = "examples/xfg_burn_proof_from_file.rs"
+
+[[example]]
+name = "test_proof_data_schema"
+path = "examples/test_proof_data_schema.rs"
+
+[[example]]
+name = "xfg_burn_proof_with_genesis"
+path = "examples/xfg_burn_proof_with_genesis.rs"
+
+[[example]]
+name = "complete_workflow_cli"
+path = "examples/complete_workflow_cli.rs"
