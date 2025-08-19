@@ -191,8 +191,7 @@ This document summarizes the successful implementation of real STARK proofs for 
 
 1. **Fuego Network Integration**
    ```rust
-   // TODO: Replace with actual Fuego network ID when available
-   let fuego_network_id = 12345;
+   let fuego_network_id = 93385046440755750514194170694064996624; // Fuego network ID
    ```
 
 2. **Transaction Hash Validation**

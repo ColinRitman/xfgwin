@@ -202,7 +202,7 @@ fn generate_real_stark_proof_with_recipient(
         recipient_address,
         block_height,
         xfg_amount,
-        12345, // TODO: Replace with actual Fuego network ID when available
+        93385046440755750514194170694064996624, // Fuego network ID
     )?;
     
     // Create real Winterfell prover

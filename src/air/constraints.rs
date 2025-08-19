@@ -493,7 +493,6 @@ impl<F: FieldElement> XfgBurnConstraints<F> {
     /// Validate network ID matches Fuego network
     pub fn validate_network(&self, network_id: &F) -> bool {
         // Validate network ID matches Fuego network
-        // TODO: Replace with actual Fuego network ID when available
         network_id.as_u64() == self.expected_network_id.as_u64()
     }
     
