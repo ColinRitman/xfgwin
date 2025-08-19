@@ -8,10 +8,7 @@ use xfg_stark::{
         field::PrimeField64,
         stark::{StarkProof, ExecutionTrace, Air, TransitionFunction, BoundaryConditions, BoundaryConstraint, TransitionConstraint},
     },
-    winterfell_integration::{
-        XfgWinterfellProver, XfgWinterfellVerifier,
-    },
-    winterfell_air::XfgWinterfellProver as RealXfgWinterfellProver,
+    proof::generation::RealStarkProofGenerator,
     Result,
 };
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -206,24 +203,14 @@ fn generate_real_stark_proof(
 ) -> Result<Vec<u8>> {
     println!("🔧 Generating real STARK proof using Winterfell...");
     
-    // Create proof data file for real proof generation
-    let proof_data = xfg_stark::proof_data_schema::ProofDataFile::new(
-        format!("0x{:064x}", block_height), // transaction hash placeholder
-        secret,
-        format!("0x{:040x}", recipient_hash.iter().fold(0u64, |acc, &byte| acc + byte as u64)), // recipient address placeholder
-        block_height,
-        xfg_amount,
-        93385046440755750514194170694064996624, // Fuego network ID
-    )?;
-    
-    // Create real Winterfell prover
-    let prover = RealXfgWinterfellProver::new();
+    // Use the real proof generator
+    let generator = xfg_stark::proof::generation::RealStarkProofGenerator::new();
     
     // Generate actual STARK proof
-    let proof = prover.prove_xfg_burn(&proof_data)?;
+    let proof = generator.generate_xfg_burn_proof(secret, xfg_amount, block_height, recipient_hash)?;
     
     // Serialize proof to bytes
-    let proof_bytes = proof.to_bytes()?;
+    let proof_bytes = proof.to_bytes();
     
     println!("   ✅ Real STARK proof generated successfully");
     println!("   📏 Proof size: {} bytes", proof_bytes.len());
