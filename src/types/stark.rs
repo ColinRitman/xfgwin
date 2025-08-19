@@ -133,6 +133,38 @@ impl<F: FieldElement> Display for Air<F> {
     }
 }
 
+impl<F: FieldElement> Air<F> {
+    /// Create a new AIR with default parameters
+    pub fn new() -> Self {
+        Self {
+            constraints: Vec::new(),
+            transition: TransitionFunction {
+                coefficients: Vec::new(),
+                degree: 0,
+            },
+            boundary: BoundaryConditions {
+                constraints: Vec::new(),
+            },
+            security_parameter: 128,
+        }
+    }
+    
+    /// Create a new AIR with custom parameters
+    pub fn with_params(
+        constraints: Vec<Constraint<F>>,
+        transition: TransitionFunction<F>,
+        boundary: BoundaryConditions<F>,
+        security_parameter: u32,
+    ) -> Self {
+        Self {
+            constraints,
+            transition,
+            boundary,
+            security_parameter,
+        }
+    }
+}
+
 /// Constraint in AIR
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constraint<F: FieldElement> {
@@ -147,6 +179,89 @@ pub struct Constraint<F: FieldElement> {
 impl<F: FieldElement> Display for Constraint<F> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Constraint(degree={}, type={:?})", self.degree, self.constraint_type)
+    }
+}
+
+impl<F: FieldElement> Constraint<F> {
+    /// Create a new constraint
+    pub fn new(
+        polynomial: Vec<F>,
+        degree: usize,
+        constraint_type: ConstraintType,
+    ) -> Self {
+        Self {
+            polynomial,
+            degree,
+            constraint_type,
+        }
+    }
+    
+    /// Validate constraint
+    pub fn validate(&self) -> std::result::Result<(), TypeError> {
+        if self.polynomial.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty polynomial".to_string()));
+        }
+        Ok(())
+    }
+    
+    /// Convert to bytes
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        
+        // Write degree
+        bytes.extend_from_slice(&self.degree.to_le_bytes());
+        
+        // Write constraint type
+        bytes.extend_from_slice(&(self.constraint_type as u8).to_le_bytes());
+        
+        // Write polynomial
+        bytes.extend_from_slice(&self.polynomial.len().to_le_bytes());
+        for coeff in &self.polynomial {
+            bytes.extend_from_slice(&coeff.to_bytes());
+        }
+        
+        bytes
+    }
+    
+    /// Convert from bytes
+    pub fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 17 {
+            return Err(TypeError::InvalidConversion("Insufficient data for constraint".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read degree
+        let degree = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        
+        // Read constraint type
+        let constraint_type = match data[offset] {
+            0 => ConstraintType::Transition,
+            1 => ConstraintType::Boundary,
+            2 => ConstraintType::Algebraic,
+            _ => return Err(TypeError::InvalidConversion("Invalid constraint type".to_string())),
+        };
+        offset += 1;
+        
+        // Read polynomial
+        let poly_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut polynomial = Vec::new();
+        for _ in 0..poly_len {
+            if offset + 8 > data.len() {
+                return Err(TypeError::InvalidConversion("Insufficient data for polynomial".to_string()));
+            }
+            let coeff = F::from_bytes(&data[offset..offset + 8])?;
+            polynomial.push(coeff);
+            offset += 8;
+        }
+        
+        Ok(Self {
+            polynomial,
+            degree,
+            constraint_type,
+        })
     }
 }
 
@@ -206,6 +321,22 @@ impl<F: FieldElement> Display for BoundaryConstraint<F> {
     }
 }
 
+impl<F: FieldElement> BoundaryConstraint<F> {
+    /// Create a new boundary constraint
+    pub fn new(register: usize, step: usize, value: F) -> Self {
+        Self {
+            register,
+            step,
+            value,
+        }
+    }
+    
+    /// Validate boundary constraint
+    pub fn validate(&self) -> std::result::Result<(), TypeError> {
+        Ok(())
+    }
+}
+
 /// Merkle tree commitment
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MerkleCommitment<F: FieldElement> {
@@ -215,6 +346,28 @@ pub struct MerkleCommitment<F: FieldElement> {
     pub depth: usize,
     /// Leaf values
     pub leaves: Vec<F>,
+}
+
+impl<F: FieldElement> MerkleCommitment<F> {
+    /// Create a new Merkle commitment
+    pub fn new(root: Vec<u8>, depth: usize, leaves: Vec<F>) -> Self {
+        Self {
+            root,
+            depth,
+            leaves,
+        }
+    }
+    
+    /// Validate Merkle commitment
+    pub fn validate(&self) -> std::result::Result<(), TypeError> {
+        if self.root.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty root".to_string()));
+        }
+        if self.leaves.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty leaves".to_string()));
+        }
+        Ok(())
+    }
 }
 
 impl<F: FieldElement> Display for MerkleCommitment<F> {
@@ -240,6 +393,44 @@ impl<F: FieldElement> Display for FriProof<F> {
     }
 }
 
+impl<F: FieldElement> FriProof<F> {
+    /// Create a new FRI proof
+    pub fn new() -> Self {
+        Self {
+            layers: Vec::new(),
+            final_polynomial: Vec::new(),
+            queries: Vec::new(),
+        }
+    }
+    
+    /// Create a new FRI proof with parameters
+    pub fn with_params(
+        layers: Vec<FriLayer<F>>,
+        final_polynomial: Vec<F>,
+        queries: Vec<FriQuery<F>>,
+    ) -> Self {
+        Self {
+            layers,
+            final_polynomial,
+            queries,
+        }
+    }
+    
+    /// Validate FRI proof
+    pub fn validate(&self) -> std::result::Result<(), TypeError> {
+        if self.layers.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty layers".to_string()));
+        }
+        if self.final_polynomial.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty final polynomial".to_string()));
+        }
+        if self.queries.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty queries".to_string()));
+        }
+        Ok(())
+    }
+}
+
 /// FRI layer
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FriLayer<F: FieldElement> {
@@ -257,6 +448,28 @@ impl<F: FieldElement> Display for FriLayer<F> {
     }
 }
 
+impl<F: FieldElement> FriLayer<F> {
+    /// Create a new FRI layer
+    pub fn new(polynomial: Vec<F>, commitment: Vec<u8>, degree: usize) -> Self {
+        Self {
+            polynomial,
+            commitment,
+            degree,
+        }
+    }
+    
+    /// Validate FRI layer
+    pub fn validate(&self) -> std::result::Result<(), TypeError> {
+        if self.polynomial.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty polynomial".to_string()));
+        }
+        if self.commitment.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty commitment".to_string()));
+        }
+        Ok(())
+    }
+}
+
 /// FRI query
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FriQuery<F: FieldElement> {
@@ -269,6 +482,24 @@ pub struct FriQuery<F: FieldElement> {
 impl<F: FieldElement> Display for FriQuery<F> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "FriQuery(responses={})", self.responses.len())
+    }
+}
+
+impl<F: FieldElement> FriQuery<F> {
+    /// Create a new FRI query
+    pub fn new(point: F, responses: Vec<F>) -> Self {
+        Self {
+            point,
+            responses,
+        }
+    }
+    
+    /// Validate FRI query
+    pub fn validate(&self) -> std::result::Result<(), TypeError> {
+        if self.responses.is_empty() {
+            return Err(TypeError::InvalidConversion("Empty responses".to_string()));
+        }
+        Ok(())
     }
 }
 
@@ -314,13 +545,82 @@ impl<F: FieldElement> StarkComponent<F> for StarkProof<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write version and metadata
+        bytes.extend_from_slice(&self.metadata.version.to_le_bytes());
+        bytes.extend_from_slice(&self.metadata.security_parameter.to_le_bytes());
+        bytes.extend_from_slice(&self.metadata.timestamp.to_le_bytes());
+        
+        // Write trace
+        bytes.extend_from_slice(&self.trace.to_bytes());
+        
+        // Write AIR
+        bytes.extend_from_slice(&self.air.to_bytes());
+        
+        // Write commitments
+        bytes.extend_from_slice(&self.commitments.len().to_le_bytes());
+        for commitment in &self.commitments {
+            bytes.extend_from_slice(&commitment.to_bytes());
+        }
+        
+        // Write FRI proof
+        bytes.extend_from_slice(&self.fri_proof.to_bytes());
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 24 {
+            return Err(TypeError::InvalidConversion("Insufficient data for proof header".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read metadata
+        let version = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
+        offset += 4;
+        let security_parameter = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
+        offset += 4;
+        let timestamp = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
+        offset += 8;
+        
+        // Read trace
+        let trace = ExecutionTrace::from_bytes(&data[offset..])?;
+        offset += trace.to_bytes().len();
+        
+        // Read AIR
+        let air = Air::from_bytes(&data[offset..])?;
+        offset += air.to_bytes().len();
+        
+        // Read commitments
+        let commitments_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut commitments = Vec::new();
+        for _ in 0..commitments_len {
+            let commitment = MerkleCommitment::from_bytes(&data[offset..])?;
+            offset += commitment.to_bytes().len();
+            commitments.push(commitment);
+        }
+        
+        // Read FRI proof
+        let fri_proof = FriProof::from_bytes(&data[offset..])?;
+        
+        let metadata = ProofMetadata {
+            version,
+            security_parameter,
+            field_modulus: "0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47".to_string(),
+            proof_size: data.len(),
+            timestamp,
+        };
+        
+        Ok(StarkProof {
+            trace,
+            air,
+            commitments,
+            fri_proof,
+            metadata,
+        })
     }
 }
 
@@ -420,13 +720,60 @@ impl<F: FieldElement> StarkComponent<F> for Air<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write security parameter
+        bytes.extend_from_slice(&self.security_parameter.to_le_bytes());
+        
+        // Write constraints
+        bytes.extend_from_slice(&self.constraints.len().to_le_bytes());
+        for constraint in &self.constraints {
+            bytes.extend_from_slice(&constraint.to_bytes());
+        }
+        
+        // Write transition function
+        bytes.extend_from_slice(&self.transition.to_bytes());
+        
+        // Write boundary conditions
+        bytes.extend_from_slice(&self.boundary.to_bytes());
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 12 {
+            return Err(TypeError::InvalidConversion("Insufficient data for AIR".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read security parameter
+        let security_parameter = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
+        offset += 4;
+        
+        // Read constraints
+        let constraints_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut constraints = Vec::new();
+        for _ in 0..constraints_len {
+            let constraint = Constraint::from_bytes(&data[offset..])?;
+            offset += constraint.to_bytes().len();
+            constraints.push(constraint);
+        }
+        
+        // Read transition function
+        let transition = TransitionFunction::from_bytes(&data[offset..])?;
+        offset += transition.to_bytes().len();
+        
+        // Read boundary conditions
+        let boundary = BoundaryConditions::from_bytes(&data[offset..])?;
+        
+        Ok(Self {
+            constraints,
+            transition,
+            boundary,
+            security_parameter,
+        })
     }
 }
 
@@ -439,13 +786,57 @@ impl<F: FieldElement> StarkComponent<F> for TransitionFunction<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write degree
+        bytes.extend_from_slice(&self.degree.to_le_bytes());
+        
+        // Write coefficients
+        bytes.extend_from_slice(&self.coefficients.len().to_le_bytes());
+        for row in &self.coefficients {
+            bytes.extend_from_slice(&row.len().to_le_bytes());
+            for coeff in row {
+                bytes.extend_from_slice(&coeff.to_bytes());
+            }
+        }
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 16 {
+            return Err(TypeError::InvalidConversion("Insufficient data for transition function".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read degree
+        let degree = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        
+        // Read coefficients
+        let rows_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut coefficients = Vec::new();
+        for _ in 0..rows_len {
+            let row_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+            offset += 8;
+            let mut row = Vec::new();
+            for _ in 0..row_len {
+                if offset + 8 > data.len() {
+                    return Err(TypeError::InvalidConversion("Insufficient data for coefficients".to_string()));
+                }
+                let coeff = F::from_bytes(&data[offset..offset + 8])?;
+                row.push(coeff);
+                offset += 8;
+            }
+            coefficients.push(row);
+        }
+        
+        Ok(Self {
+            coefficients,
+            degree,
+        })
     }
 }
 
@@ -458,13 +849,37 @@ impl<F: FieldElement> StarkComponent<F> for BoundaryConditions<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write constraints
+        bytes.extend_from_slice(&self.constraints.len().to_le_bytes());
+        for constraint in &self.constraints {
+            bytes.extend_from_slice(&constraint.to_bytes());
+        }
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 8 {
+            return Err(TypeError::InvalidConversion("Insufficient data for boundary conditions".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read constraints
+        let constraints_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut constraints = Vec::new();
+        for _ in 0..constraints_len {
+            let constraint = BoundaryConstraint::from_bytes(&data[offset..])?;
+            offset += constraint.to_bytes().len();
+            constraints.push(constraint);
+        }
+        
+        Ok(Self {
+            constraints,
+        })
     }
 }
 
@@ -474,13 +889,39 @@ impl<F: FieldElement> StarkComponent<F> for BoundaryConstraint<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write register, step, and value
+        bytes.extend_from_slice(&self.register.to_le_bytes());
+        bytes.extend_from_slice(&self.step.to_le_bytes());
+        bytes.extend_from_slice(&self.value.to_bytes());
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 24 {
+            return Err(TypeError::InvalidConversion("Insufficient data for boundary constraint".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read register
+        let register = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        
+        // Read step
+        let step = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        
+        // Read value
+        let value = F::from_bytes(&data[offset..offset + 8])?;
+        
+        Ok(Self {
+            register,
+            step,
+            value,
+        })
     }
 }
 
@@ -498,13 +939,62 @@ impl<F: FieldElement> StarkComponent<F> for MerkleCommitment<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write root
+        bytes.extend_from_slice(&self.root.len().to_le_bytes());
+        bytes.extend_from_slice(&self.root);
+        
+        // Write depth
+        bytes.extend_from_slice(&self.depth.to_le_bytes());
+        
+        // Write leaves
+        bytes.extend_from_slice(&self.leaves.len().to_le_bytes());
+        for leaf in &self.leaves {
+            bytes.extend_from_slice(&leaf.to_bytes());
+        }
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 24 {
+            return Err(TypeError::InvalidConversion("Insufficient data for Merkle commitment".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read root
+        let root_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        if offset + root_len > data.len() {
+            return Err(TypeError::InvalidConversion("Insufficient data for root".to_string()));
+        }
+        let root = data[offset..offset + root_len].to_vec();
+        offset += root_len;
+        
+        // Read depth
+        let depth = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        
+        // Read leaves
+        let leaves_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut leaves = Vec::new();
+        for _ in 0..leaves_len {
+            if offset + 8 > data.len() {
+                return Err(TypeError::InvalidConversion("Insufficient data for leaves".to_string()));
+            }
+            let leaf = F::from_bytes(&data[offset..offset + 8])?;
+            leaves.push(leaf);
+            offset += 8;
+        }
+        
+        Ok(Self {
+            root,
+            depth,
+            leaves,
+        })
     }
 }
 
@@ -530,13 +1020,74 @@ impl<F: FieldElement> StarkComponent<F> for FriProof<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write layers
+        bytes.extend_from_slice(&self.layers.len().to_le_bytes());
+        for layer in &self.layers {
+            bytes.extend_from_slice(&layer.to_bytes());
+        }
+        
+        // Write final polynomial
+        bytes.extend_from_slice(&self.final_polynomial.len().to_le_bytes());
+        for coeff in &self.final_polynomial {
+            bytes.extend_from_slice(&coeff.to_bytes());
+        }
+        
+        // Write queries
+        bytes.extend_from_slice(&self.queries.len().to_le_bytes());
+        for query in &self.queries {
+            bytes.extend_from_slice(&query.to_bytes());
+        }
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 24 {
+            return Err(TypeError::InvalidConversion("Insufficient data for FRI proof".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read layers
+        let layers_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut layers = Vec::new();
+        for _ in 0..layers_len {
+            let layer = FriLayer::from_bytes(&data[offset..])?;
+            offset += layer.to_bytes().len();
+            layers.push(layer);
+        }
+        
+        // Read final polynomial
+        let poly_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut final_polynomial = Vec::new();
+        for _ in 0..poly_len {
+            if offset + 8 > data.len() {
+                return Err(TypeError::InvalidConversion("Insufficient data for final polynomial".to_string()));
+            }
+            let coeff = F::from_bytes(&data[offset..offset + 8])?;
+            final_polynomial.push(coeff);
+            offset += 8;
+        }
+        
+        // Read queries
+        let queries_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut queries = Vec::new();
+        for _ in 0..queries_len {
+            let query = FriQuery::from_bytes(&data[offset..])?;
+            offset += query.to_bytes().len();
+            queries.push(query);
+        }
+        
+        Ok(Self {
+            layers,
+            final_polynomial,
+            queries,
+        })
     }
 }
 
@@ -554,13 +1105,61 @@ impl<F: FieldElement> StarkComponent<F> for FriLayer<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write polynomial
+        bytes.extend_from_slice(&self.polynomial.len().to_le_bytes());
+        for coeff in &self.polynomial {
+            bytes.extend_from_slice(&coeff.to_bytes());
+        }
+        
+        // Write commitment
+        bytes.extend_from_slice(&self.commitment.len().to_le_bytes());
+        bytes.extend_from_slice(&self.commitment);
+        
+        // Write degree
+        bytes.extend_from_slice(&self.degree.to_le_bytes());
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 24 {
+            return Err(TypeError::InvalidConversion("Insufficient data for FRI layer".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read polynomial
+        let poly_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut polynomial = Vec::new();
+        for _ in 0..poly_len {
+            if offset + 8 > data.len() {
+                return Err(TypeError::InvalidConversion("Insufficient data for polynomial".to_string()));
+            }
+            let coeff = F::from_bytes(&data[offset..offset + 8])?;
+            polynomial.push(coeff);
+            offset += 8;
+        }
+        
+        // Read commitment
+        let commit_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        if offset + commit_len > data.len() {
+            return Err(TypeError::InvalidConversion("Insufficient data for commitment".to_string()));
+        }
+        let commitment = data[offset..offset + commit_len].to_vec();
+        offset += commit_len;
+        
+        // Read degree
+        let degree = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        
+        Ok(Self {
+            polynomial,
+            commitment,
+            degree,
+        })
     }
 }
 
@@ -573,13 +1172,48 @@ impl<F: FieldElement> StarkComponent<F> for FriQuery<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        let mut bytes = Vec::new();
+        
+        // Write point
+        bytes.extend_from_slice(&self.point.to_bytes());
+        
+        // Write responses
+        bytes.extend_from_slice(&self.responses.len().to_le_bytes());
+        for response in &self.responses {
+            bytes.extend_from_slice(&response.to_bytes());
+        }
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        if data.len() < 16 {
+            return Err(TypeError::InvalidConversion("Insufficient data for FRI query".to_string()));
+        }
+        
+        let mut offset = 0;
+        
+        // Read point
+        let point = F::from_bytes(&data[offset..offset + 8])?;
+        offset += 8;
+        
+        // Read responses
+        let responses_len = u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap()) as usize;
+        offset += 8;
+        let mut responses = Vec::new();
+        for _ in 0..responses_len {
+            if offset + 8 > data.len() {
+                return Err(TypeError::InvalidConversion("Insufficient data for responses".to_string()));
+            }
+            let response = F::from_bytes(&data[offset..offset + 8])?;
+            responses.push(response);
+            offset += 8;
+        }
+        
+        Ok(Self {
+            point,
+            responses,
+        })
     }
 }
 

@@ -5,8 +5,9 @@
 
 use winterfell::{
     Air, AirContext, Assertion, EvaluationFrame, TraceInfo, TransitionConstraintDegree,
-    math::fields::f64::BaseElement, FieldElement, ProofOptions, Prover, StarkProof,
+    math::fields::f64::BaseElement, ProofOptions, Prover, StarkProof,
 };
+use winter_math::FieldElement;
 use sha3::{Keccak256, Digest};
 use crate::{
     types::field::PrimeField64,

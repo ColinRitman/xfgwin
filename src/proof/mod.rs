@@ -12,6 +12,8 @@
 //! - **Constraint Evaluation**: Polynomial constraint evaluation
 //! - **Commitment Generation**: Merkle tree commitments for proof components
 
+pub mod generation;
+
 use crate::types::{FieldElement, StarkComponent};
 use crate::types::stark::{StarkProof, ExecutionTrace, Air as StarkAir, MerkleCommitment, FriProof, ProofMetadata};
 use crate::air::Air;
