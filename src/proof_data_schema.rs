@@ -3,21 +3,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Genesis validation data for fork attack prevention
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GenesisValidation {
-    /// Expected genesis transaction hash
-    pub genesis_transaction_hash: String, // hex string
-    /// Genesis block hash
-    pub genesis_block_hash: String, // hex string
-    /// Genesis block timestamp
-    pub genesis_timestamp: u64,
-    /// Genesis validation hash: keccak256(genesis_tx + genesis_block + genesis_timestamp)
-    pub genesis_validation_hash: String, // hex string
+pub struct NetworkValidation {
     /// Fuego network ID (chain ID)
     pub fuego_network_id: u64,
-    /// Network validation hash: keccak256(network_id + genesis_tx)
+    /// Network validation hash: keccak256(network_id)
     pub network_validation_hash: String, // hex string
 }
-
 /// Proof data file schema for XFG burn transactions
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProofDataFile {
@@ -33,6 +24,7 @@ pub struct ProofDataFile {
 
 /// File metadata
 #[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct ProofMetadata {
     /// Schema version
     pub version: String,
@@ -48,6 +40,7 @@ pub struct ProofMetadata {
 
 /// Cryptographic data for proof generation
 #[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct CryptographicData {
     /// 32-byte secret from XFG transaction extra field
     pub secret: String, // hex string
@@ -65,6 +58,7 @@ pub struct CryptographicData {
 
 /// User-facing data
 #[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct UserData {
     /// Recipient Arbitrum address
     pub recipient_address: String,
@@ -92,7 +86,7 @@ pub struct SecurityData {
     /// File integrity check
     pub integrity_hash: String, // hex string
     /// Genesis validation data
-    pub genesis_validation: GenesisValidation,
+    pub network_validation: NetworkValidation,
 }
 
 impl ProofDataFile {
@@ -103,9 +97,6 @@ impl ProofDataFile {
         recipient_address: String,
         block_height: u64,
         xfg_amount: u64,
-        genesis_transaction_hash: String,
-        genesis_block_hash: String,
-        genesis_timestamp: u64,
         fuego_network_id: u64,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let timestamp = SystemTime::now()
@@ -119,15 +110,10 @@ impl ProofDataFile {
         let recipient_hash = Self::calculate_recipient_hash(&recipient_address)?;
         let tx_extra_hash = Self::calculate_tx_extra_hash(&secret)?;
         
-        // Calculate genesis validation hashes
-        let genesis_validation_hash = Self::calculate_genesis_validation_hash(
-            &genesis_transaction_hash,
-            &genesis_block_hash,
-            genesis_timestamp
-        )?;
+        // Calculate network validation hash
         let network_validation_hash = Self::calculate_network_validation_hash(
             fuego_network_id,
-            &genesis_transaction_hash
+            &transaction_hash
         )?;
 
         // Format amounts for display
@@ -164,11 +150,7 @@ impl ProofDataFile {
                 checksum: "".to_string(), // Will be calculated
                 signature_pubkey: "".to_string(), // Will be set
                 integrity_hash: "".to_string(), // Will be calculated
-                genesis_validation: GenesisValidation {
-                    genesis_transaction_hash,
-                    genesis_block_hash,
-                    genesis_timestamp,
-                    genesis_validation_hash: hex::encode(genesis_validation_hash),
+                network_validation: NetworkValidation {
                     fuego_network_id,
                     network_validation_hash: hex::encode(network_validation_hash),
                 },
@@ -225,23 +207,6 @@ impl ProofDataFile {
         let mut tx_extra_hash = [0u8; 32];
         tx_extra_hash.copy_from_slice(&result);
         Ok(tx_extra_hash)
-    }
-
-    /// Calculate genesis validation hash
-    fn calculate_genesis_validation_hash(
-        genesis_tx: &str,
-        genesis_block: &str,
-        genesis_timestamp: u64,
-    ) -> Result<[u8; 32], Box<dyn std::error::Error>> {
-        use sha3::{Keccak256, Digest};
-        let mut hasher = Keccak256::new();
-        hasher.update(genesis_tx.as_bytes());
-        hasher.update(genesis_block.as_bytes());
-        hasher.update(genesis_timestamp.to_string().as_bytes());
-        let result = hasher.finalize();
-        let mut genesis_hash = [0u8; 32];
-        genesis_hash.copy_from_slice(&result);
-        Ok(genesis_hash)
     }
 
     /// Calculate network validation hash
@@ -301,7 +266,7 @@ impl ProofDataFile {
         }
 
         // Validate XFG amount (supports both 0.8 XFG and 8000 XFG)
-        if !self.is_valid_xfg_amount(self.cryptographic_data.xfg_amount) {
+        if !ProofDataFile::is_valid_xfg_amount(self.cryptographic_data.xfg_amount) {
             return Err(format!("Invalid XFG amount: {} (must be 8,000,000 or 80,000,000,000 units)", 
                 self.cryptographic_data.xfg_amount).into());
         }
@@ -329,22 +294,12 @@ impl ProofDataFile {
             return Err("Checksum validation failed".into());
         }
 
-        // Validate genesis data
-        let expected_genesis_hash = Self::calculate_genesis_validation_hash(
-            &self.security.genesis_validation.genesis_transaction_hash,
-            &self.security.genesis_validation.genesis_block_hash,
-            self.security.genesis_validation.genesis_timestamp
-        )?;
-        if self.security.genesis_validation.genesis_validation_hash != hex::encode(expected_genesis_hash) {
-            return Err("Genesis validation hash mismatch".into());
-        }
-
         // Validate network data
         let expected_network_hash = Self::calculate_network_validation_hash(
-            self.security.genesis_validation.fuego_network_id,
-            &self.security.genesis_validation.genesis_transaction_hash
+            self.security.network_validation.fuego_network_id,
+            &self.metadata.transaction_hash
         )?;
-        if self.security.genesis_validation.network_validation_hash != hex::encode(expected_network_hash) {
+        if self.security.network_validation.network_validation_hash != hex::encode(expected_network_hash) {
             return Err("Network validation hash mismatch".into());
         }
 
@@ -419,8 +374,6 @@ mod tests {
         let secret = [0x42u8; 32];
         let recipient = "0xf8108826279b68504BDF5B3f056382E7Bf821CD0".to_string();
         let tx_hash = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string();
-        let genesis_tx = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string();
-        let genesis_block = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string();
         
         let proof_data = ProofDataFile::new(
             tx_hash,
@@ -428,16 +381,13 @@ mod tests {
             recipient,
             12345,
             8_000_000,
-            genesis_tx,
-            genesis_block,
-            1640995200, // 2022-01-01 00:00:00 UTC
             12345, // Fuego network ID
         ).unwrap();
 
         assert_eq!(proof_data.metadata.version, "1.0");
         assert_eq!(proof_data.cryptographic_data.xfg_amount, 8_000_000);
         assert_eq!(proof_data.user_data.heat_amount, 80_000_000);
-        assert_eq!(proof_data.security.genesis_validation.fuego_network_id, 12345);
+        assert_eq!(proof_data.security.network_validation.fuego_network_id, 12345);
         assert!(proof_data.validate().unwrap());
     }
 
@@ -446,8 +396,6 @@ mod tests {
         let secret = [0x42u8; 32];
         let recipient = "0xf8108826279b68504BDF5B3f056382E7Bf821CD0".to_string();
         let tx_hash = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string();
-        let genesis_tx = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string();
-        let genesis_block = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string();
         
         let proof_data = ProofDataFile::new(
             tx_hash,
@@ -455,16 +403,13 @@ mod tests {
             recipient,
             12345,
             80_000_000_000, // 8000 XFG
-            genesis_tx,
-            genesis_block,
-            1640995200, // 2022-01-01 00:00:00 UTC
             12345, // Fuego network ID
         ).unwrap();
 
         assert_eq!(proof_data.metadata.version, "1.0");
         assert_eq!(proof_data.cryptographic_data.xfg_amount, 80_000_000_000);
         assert_eq!(proof_data.user_data.heat_amount, 800_000_000_000); // 800B HEAT
-        assert_eq!(proof_data.security.genesis_validation.fuego_network_id, 12345);
+        assert_eq!(proof_data.security.network_validation.fuego_network_id, 12345);
         assert!(proof_data.validate().unwrap());
     }
 
@@ -488,8 +433,6 @@ mod tests {
         let secret = [0x42u8; 32];
         let recipient = "0xf8108826279b68504BDF5B3f056382E7Bf821CD0".to_string();
         let tx_hash = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string();
-        let genesis_tx = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string();
-        let genesis_block = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef".to_string();
         
         let proof_data = ProofDataFile::new(
             tx_hash,
@@ -497,9 +440,6 @@ mod tests {
             recipient,
             12345,
             8_000_000,
-            genesis_tx,
-            genesis_block,
-            1640995200,
             12345,
         ).unwrap();
 
