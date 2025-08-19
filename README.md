@@ -13,7 +13,6 @@ A comprehensive implementation of STARK (Scalable Transparent Argument of Knowle
 - **Polynomial Operations**: Efficient polynomial arithmetic and evaluation
 - **STARK Proof System**: Complete STARK proof generation and verification
 - **Type System**: Comprehensive type definitions for all cryptographic operations
-- **Background Agents**: Multi-agent coordination system for development
 
 ### Security Features
 
@@ -41,7 +40,7 @@ A comprehensive implementation of STARK (Scalable Transparent Argument of Knowle
 
 ```bash
 # Clone the repository
-git clone https://github.com/ColinRitman/xfgwinter.git
+git clone https://github.com/ColinRitman/xfgwin.git
 cd xfgwinter
 
 # Build the project
@@ -57,7 +56,7 @@ cargo bench
 ## 🏗️ Project Structure
 
 ```
-xfgwinter/
+xfgwin/
 ├── src/
 │   ├── lib.rs              # Main library entry point
 │   ├── types/              # Type system definitions
@@ -70,8 +69,6 @@ xfgwinter/
 │   ├── polynomial/         # Polynomial arithmetic implementations
 │   ├── stark/              # STARK proof implementations
 │   └── utils/              # Utility functions
-├── agents/                 # Background agent specifications
-├── background-agents/      # Background agent system
 ├── tests/                  # Integration tests
 ├── benches/                # Performance benchmarks
 └── docs/                   # Documentation
@@ -191,33 +188,6 @@ cargo test secret
 cargo bench
 ```
 
-## 🔍 Background Agents
-
-The project includes a sophisticated background agent system for development coordination:
-
-### Agent Types
-
-1. **Type Specialist**: Handles type system and Rust implementation
-2. **Trace-AIR Expert**: Manages execution traces and AIR constraints
-3. **Prover Specialist**: Implements STARK proof generation
-4. **Proof Verification Engineer**: Handles proof verification
-5. **Testing Integration Specialist**: Manages testing and integration
-6. **Security Optimization Expert**: Ensures security and optimization
-
-### Starting Background Agents
-
-```bash
-cd background-agents
-./start_agents.sh
-```
-
-### Checking Agent Status
-
-```bash
-cd background-agents
-./check_status.sh
-```
-
 ## 📚 Documentation
 
 ### API Documentation
@@ -243,26 +213,22 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
-- **Winterfell Framework**: For cryptographic primitives and STARK implementation patterns
-- **Rust Community**: For the excellent language and ecosystem
-- **Cryptographic Research Community**: For the theoretical foundations
-- **Ned Stark**: Winter Is Coming
+- **[Winterfell by Meta](https://github.com/facebook/winterfell)**: cryptographic primitives and STARK implementation patterns
 
 ## 🔗 Links
 
-- [Repository](https://github.com/ColinRitman/xfgwinter)
-- [Issues](https://github.com/ColinRitman/xfgwinter/issues)
-- [Discussions](https://github.com/ColinRitman/xfgwinter/discussions)
-- [Wiki](https://github.com/ColinRitman/xfgwinter/wiki)
+- [Repository](https://github.com/ColinRitman/xfgwin)
+- [Issues](https://github.com/ColinRitman/xfgwin/issues)
+- [Discussions](https://github.com/ColinRitman/xfgwin/discussions)
+- [Wiki](https://github.com/ColinRitman/xfgwin/wiki)
 
 ---
 
-**Built by XFG Elderfire Dev Team © 2025**
+**2025 © Elderfire Privacy Council**
 
 
-<sub>The North Remembers</sub>
-
+<sub>Winter is coming...</sub>
