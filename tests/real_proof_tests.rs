@@ -221,7 +221,7 @@ fn create_real_proof_data() -> ProofDataFile {
         recipient,
         12345,
         8_000_000, // 0.8 XFG
-        12345, // TODO: Replace with actual Fuego network ID when available
+        93385046440755750514194170694064996624, // Fuego network ID
     ).unwrap()
 }
 
@@ -236,7 +236,7 @@ fn create_real_proof_data_with_secret(secret: [u8; 32]) -> ProofDataFile {
         recipient,
         12345,
         8_000_000, // 0.8 XFG
-        12345, // TODO: Replace with actual Fuego network ID when available
+        93385046440755750514194170694064996624, // Fuego network ID
     ).unwrap()
 }
 
@@ -246,7 +246,7 @@ fn test_integration_with_real_data() {
     println!("🧪 Testing integration with real data...");
     
     // Test with real Fuego burn deposits
-    let fuego_network_id = 12345; // TODO: Replace with actual Fuego network ID when available
+    let fuego_network_id = 93385046440755750514194170694064996624; // Fuego network ID
     
     let proof_data = create_real_proof_data();
     assert_eq!(
