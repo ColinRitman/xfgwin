@@ -33,6 +33,7 @@ ripemd = "0.1"
 anyhow = "1.0"
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1.0", features = ["full"] }
+ed25519-dalek = "2.0"
 
 [dev-dependencies]
 quickcheck = "1.0"

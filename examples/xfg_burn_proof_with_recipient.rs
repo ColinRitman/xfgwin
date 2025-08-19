@@ -11,6 +11,7 @@ use xfg_stark::{
     winterfell_integration::{
         XfgWinterfellProver, XfgWinterfellVerifier,
     },
+    winterfell_air::XfgWinterfellProver as RealXfgWinterfellProver,
     Result,
 };
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -185,6 +186,40 @@ impl XFGBurnProofGeneratorWithRecipient {
     }
 }
 
+/// Generate real STARK proof with recipient using Winterfell framework
+fn generate_real_stark_proof_with_recipient(
+    xfg_amount: u64,
+    secret: [u8; 32],
+    block_height: u64,
+    recipient_address: String,
+) -> Result<Vec<u8>> {
+    println!("🔧 Generating real STARK proof with recipient using Winterfell...");
+    
+    // Create proof data file for real proof generation
+    let proof_data = xfg_stark::proof_data_schema::ProofDataFile::new(
+        format!("0x{:064x}", block_height), // transaction hash placeholder
+        secret,
+        recipient_address,
+        block_height,
+        xfg_amount,
+        12345, // TODO: Replace with actual Fuego network ID when available
+    )?;
+    
+    // Create real Winterfell prover
+    let prover = RealXfgWinterfellProver::new();
+    
+    // Generate actual STARK proof
+    let proof = prover.prove_xfg_burn(&proof_data)?;
+    
+    // Serialize proof to bytes
+    let proof_bytes = proof.to_bytes()?;
+    
+    println!("   ✅ Real STARK proof generated successfully");
+    println!("   📏 Proof size: {} bytes", proof_bytes.len());
+    
+    Ok(proof_bytes)
+}
+
 fn main() -> Result<()> {
     println!("🚀 0.8 XFG Burn Proof Generator with User-Specified Recipient");
     println!("=============================================================");
@@ -258,7 +293,7 @@ fn main() -> Result<()> {
         recipient_address: recipient_address.clone(),
         security_level: proof.metadata.security_parameter,
         timestamp: proof.metadata.timestamp,
-        proof_data: vec![0x42; 1024], // Placeholder proof data
+        proof_data: generate_real_stark_proof_with_recipient(xfg_amount, secret, block_height, recipient_address)?,
     };
     
     let proof_bytes = bincode::serialize(&serializable_proof).unwrap();

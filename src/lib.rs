@@ -40,6 +40,7 @@
 #![warn(clippy::pedantic)]
 
 pub mod field;
+pub mod field_conversion;
 pub mod polynomial;
 pub mod stark;
 pub mod types;
@@ -47,6 +48,7 @@ pub mod utils;
 pub mod air;
 pub mod proof;
 pub mod winterfell_integration;
+pub mod winterfell_air;
 pub mod benchmarks;
 /// XFG RPC validation module for transaction verification
 pub mod xfg_rpc_validator;

@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
+use ed25519_dalek::{SigningKey, VerifyingKey, Signer, Verifier};
+use rand::rngs::OsRng;
 
 /// Genesis validation data for fork attack prevention
 #[derive(Debug, Serialize, Deserialize)]
@@ -251,9 +253,21 @@ impl ProofDataFile {
         let integrity_hash = integrity_hasher.finalize();
         self.security.integrity_hash = hex::encode(integrity_hash);
 
-        // For now, use a placeholder signature (in production, this would be a real signature)
-        self.security.signature = "placeholder_signature".to_string();
-        self.security.signature_pubkey = "placeholder_pubkey".to_string();
+        // Generate real Ed25519 signature
+        // Note: In production, this would use a real private key
+        // For now, we generate a random key for demonstration
+        let mut rng = OsRng;
+        let signing_key = SigningKey::generate(&mut rng);
+        
+        // Create message to sign (proof data hash)
+        let message = self.create_signature_message()?;
+        
+        // Sign the message
+        let signature = signing_key.sign(&message);
+        
+        // Store signature and public key
+        self.security.signature = hex::encode(signature.to_bytes());
+        self.security.signature_pubkey = hex::encode(signing_key.verifying_key().to_bytes());
 
         Ok(())
     }
@@ -304,6 +318,53 @@ impl ProofDataFile {
         }
 
         Ok(true)
+    }
+    
+    /// Sign the proof data with a private key
+    pub fn sign(&mut self, private_key: &[u8; 32]) -> Result<(), Box<dyn std::error::Error>> {
+        // Create signing key from private key
+        let signing_key = SigningKey::from_bytes(private_key)?;
+        
+        // Create message to sign (proof data hash)
+        let message = self.create_signature_message()?;
+        
+        // Sign the message
+        let signature = signing_key.sign(&message);
+        
+        // Store signature and public key
+        self.security.signature = hex::encode(signature.to_bytes());
+        self.security.signature_pubkey = hex::encode(signing_key.verifying_key().to_bytes());
+        
+        Ok(())
+    }
+    
+    /// Verify the signature of the proof data
+    pub fn verify_signature(&self) -> Result<bool, Box<dyn std::error::Error>> {
+        // Decode public key
+        let pubkey_bytes = hex::decode(&self.security.signature_pubkey)?;
+        let verifying_key = VerifyingKey::from_bytes(&pubkey_bytes)?;
+        
+        // Decode signature
+        let sig_bytes = hex::decode(&self.security.signature)?;
+        let signature = ed25519_dalek::Signature::from_bytes(&sig_bytes)?;
+        
+        // Create message
+        let message = self.create_signature_message()?;
+        
+        // Verify signature
+        Ok(verifying_key.verify(&message, &signature).is_ok())
+    }
+    
+    /// Create deterministic message for signing
+    fn create_signature_message(&self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        // Create deterministic message for signing
+        let mut hasher = sha3::Keccak256::new();
+        hasher.update(&self.metadata.transaction_hash.as_bytes());
+        hasher.update(&self.cryptographic_data.secret.as_bytes());
+        hasher.update(&self.cryptographic_data.xfg_amount.to_le_bytes());
+        hasher.update(&self.security.network_validation.fuego_network_id.to_le_bytes());
+        
+        Ok(hasher.finalize().to_vec())
     }
 
     /// Validate XFG amount (supports both 0.8 XFG and 8000 XFG)

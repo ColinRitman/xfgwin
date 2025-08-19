@@ -76,6 +76,44 @@ impl<F: FieldElement> Display for ExecutionTrace<F> {
     }
 }
 
+impl<F: FieldElement> ExecutionTrace<F> {
+    /// Create a new execution trace from columns
+    pub fn new(columns: Vec<Vec<F>>) -> Self {
+        let length = columns.first().map(|col| col.len()).unwrap_or(0);
+        let num_registers = columns.len();
+        
+        Self {
+            columns,
+            length,
+            num_registers,
+        }
+    }
+    
+    /// Get a specific column by index
+    pub fn get_column(&self, index: usize) -> Option<&[F]> {
+        self.columns.get(index).map(|col| col.as_slice())
+    }
+    
+    /// Get a specific row by index
+    pub fn get_row(&self, index: usize) -> Option<Vec<F>> {
+        if index >= self.length {
+            return None;
+        }
+        
+        Some(self.columns.iter().map(|col| col[index].clone()).collect())
+    }
+    
+    /// Get the number of columns (registers)
+    pub fn num_columns(&self) -> usize {
+        self.num_registers
+    }
+    
+    /// Get the trace length
+    pub fn trace_length(&self) -> usize {
+        self.length
+    }
+}
+
 /// AIR (Algebraic Intermediate Representation) constraints
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Air<F: FieldElement> {
@@ -310,13 +348,58 @@ impl<F: FieldElement> StarkComponent<F> for ExecutionTrace<F> {
     }
     
     fn to_bytes(&self) -> Vec<u8> {
-        // Placeholder implementation
-        Vec::new()
+        // Serialize trace to bytes for storage/transmission
+        let mut bytes = Vec::new();
+        
+        // Write header: length, num_registers
+        bytes.extend_from_slice(&self.length.to_le_bytes());
+        bytes.extend_from_slice(&self.num_registers.to_le_bytes());
+        
+        // Write each column
+        for column in &self.columns {
+            for element in column {
+                // Convert field element to bytes (implement based on field type)
+                bytes.extend_from_slice(&element.to_bytes());
+            }
+        }
+        
+        bytes
     }
     
-    fn from_bytes(_bytes: &[u8]) -> std::result::Result<Self, TypeError> {
-        // Placeholder implementation
-        Err(TypeError::InvalidConversion("Not implemented".to_string()))
+    fn from_bytes(data: &[u8]) -> std::result::Result<Self, TypeError> {
+        // Deserialize trace from bytes
+        if data.len() < 16 {
+            return Err(TypeError::InvalidConversion("Insufficient data".to_string()));
+        }
+        
+        let length = u64::from_le_bytes(data[0..8].try_into().unwrap()) as usize;
+        let num_registers = u64::from_le_bytes(data[8..16].try_into().unwrap()) as usize;
+        
+        // Calculate expected data size
+        let mut offset = 16;
+        let mut columns = Vec::new();
+        
+        for _ in 0..num_registers {
+            let mut column = Vec::new();
+            for _ in 0..length {
+                if offset + 8 > data.len() {
+                    return Err(TypeError::InvalidConversion("Insufficient data for field elements".to_string()));
+                }
+                
+                // Read field element (assuming 8 bytes per element)
+                let element_bytes = &data[offset..offset + 8];
+                let element = F::from_bytes(element_bytes)?;
+                column.push(element);
+                offset += 8;
+            }
+            columns.push(column);
+        }
+        
+        Ok(Self {
+            columns,
+            length,
+            num_registers,
+        })
     }
 }
 

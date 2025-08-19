@@ -15,6 +15,7 @@ use xfg_stark::{
     winterfell_integration::{
         XfgWinterfellProver, XfgWinterfellVerifier,
     },
+    winterfell_air::XfgWinterfellProver as RealXfgWinterfellProver,
     xfg_rpc_validator::{XFGRPCValidator, ProofData},
     Result,
 };
@@ -291,6 +292,40 @@ impl CompleteXFGBurnProofGenerator {
     }
 }
 
+/// Generate real STARK proof for complete XFG burn using Winterfell framework
+fn generate_real_stark_proof_complete(
+    xfg_amount: u64,
+    secret: [u8; 32],
+    block_height: u64,
+    recipient_address: String,
+) -> Result<Vec<u8>> {
+    println!("🔧 Generating real STARK proof for complete XFG burn using Winterfell...");
+    
+    // Create proof data file for real proof generation
+    let proof_data = xfg_stark::proof_data_schema::ProofDataFile::new(
+        format!("0x{:064x}", block_height), // transaction hash placeholder
+        secret,
+        recipient_address,
+        block_height,
+        xfg_amount,
+        12345, // TODO: Replace with actual Fuego network ID when available
+    )?;
+    
+    // Create real Winterfell prover
+    let prover = RealXfgWinterfellProver::new();
+    
+    // Generate actual STARK proof
+    let proof = prover.prove_xfg_burn(&proof_data)?;
+    
+    // Serialize proof to bytes
+    let proof_bytes = proof.to_bytes()?;
+    
+    println!("   ✅ Real STARK proof generated successfully");
+    println!("   📏 Proof size: {} bytes", proof_bytes.len());
+    
+    Ok(proof_bytes)
+}
+
 fn main() -> Result<()> {
     println!("🚀 Complete XFG Burn Proof Generator");
     println!("====================================");
@@ -350,7 +385,7 @@ fn main() -> Result<()> {
         heat_amount,
         security_level: proof.metadata.security_parameter,
         timestamp: proof.metadata.timestamp,
-        proof_data: vec![0x42; 1024], // In real implementation, this would be actual proof bytes
+        proof_data: generate_real_stark_proof_complete(8_000_000, hex::decode(&form_data.secret[2..])?.try_into()?, form_data.block_height, form_data.recipient_address.clone())?,
         metadata,
     };
     
