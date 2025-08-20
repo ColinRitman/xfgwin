@@ -1,20 +1,4 @@
-//! Type System for XFG STARK Implementation
-//! 
-//! This module provides comprehensive type definitions for the XFG STARK proof system,
-//! ensuring type safety, memory safety, and cryptographic security at the type level.
-//! 
-//! ## Elite Senior Developer Standards
-//! 
-//! - **Type Safety**: Comprehensive type definitions with compile-time guarantees
-//! - **Memory Safety**: Leveraging Rust's ownership system for cryptographic security
-//! - **Cryptographic Security**: Type-level prevention of timing attacks and vulnerabilities
-//! - **Performance**: Zero-cost abstractions for all type operations
-//! - **Documentation**: Mathematical notation and comprehensive examples
-
-use core::fmt::{Debug, Display};
-use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
+//! Type definitions for XFG STARK implementation
 
 pub mod field;
 pub mod polynomial;
@@ -26,87 +10,58 @@ pub use polynomial::*;
 pub use stark::*;
 pub use secret::*;
 
-/// Error types for the type system
-#[derive(Debug, Error, Clone, PartialEq, Eq)]
+/// Type error for the type system
+#[derive(Debug, thiserror::Error)]
 pub enum TypeError {
-    /// Invalid type conversion
-    #[error("Invalid type conversion: {0}")]
-    InvalidConversion(String),
-    
-    /// Type mismatch error
-    #[error("Type mismatch: expected {expected}, got {actual}")]
-    TypeMismatch { 
-        /// Expected type
-        expected: String, 
-        /// Actual type
-        actual: String 
-    },
-    
-    /// Cryptographic type error
-    #[error("Cryptographic type error: {0}")]
-    CryptoError(String),
-    
-    /// Memory safety error
-    #[error("Memory safety error: {0}")]
-    MemoryError(String),
+    #[error("Invalid field element")]
+    InvalidFieldElement,
+    #[error("Invalid polynomial")]
+    InvalidPolynomial,
+    #[error("Invalid STARK proof")]
+    InvalidStarkProof,
+    #[error("Invalid secret")]
+    InvalidSecret,
 }
 
-/// Core trait for field elements with cryptographic properties
-pub trait FieldElement: 
-    Copy + Clone + Debug + Display + PartialEq + Eq + PartialOrd + Ord +
-    Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign +
-    Mul<Output = Self> + MulAssign + Neg<Output = Self> +
-    Serialize + for<'de> Deserialize<'de>
-{
-    /// The field modulus (prime number)
-    const MODULUS: u64;
+/// Field element trait for cryptographic operations
+pub trait FieldElement: Clone + Copy + PartialEq + Eq {
+    /// Get the value as u64
+    fn value(&self) -> u64;
     
-    /// The field characteristic (prime number)
-    const CHARACTERISTIC: u64;
+    /// Create from u64
+    fn new(value: u64) -> Self;
     
-    /// Zero element in the field
+    /// Zero element
     fn zero() -> Self;
     
-    /// One element in the field
+    /// One element
     fn one() -> Self;
     
-    /// Check if the element is zero
+    /// Add two elements
+    fn add(&self, other: &Self) -> Self;
+    
+    /// Multiply two elements
+    fn mul(&self, other: &Self) -> Self;
+    
+    /// Subtract two elements
+    fn sub(&self, other: &Self) -> Self;
+    
+    /// Check if zero
     fn is_zero(&self) -> bool;
     
-    /// Check if the element is one
+    /// Check if one
     fn is_one(&self) -> bool;
     
-    /// Modular addition (constant-time)
-    fn add_assign(&mut self, other: &Self);
-    
-    /// Modular subtraction (constant-time)
-    fn sub_assign(&mut self, other: &Self);
-    
-    /// Modular multiplication (constant-time)
-    fn mul_assign(&mut self, other: &Self);
-    
-    /// Modular inverse (constant-time)
-    fn inverse(&self) -> Option<Self>;
-    
-    /// Modular exponentiation (constant-time)
-    fn pow(&self, exponent: u64) -> Self;
-    
-    /// Square root (if it exists)
-    fn sqrt(&self) -> Option<Self>;
-    
-    /// Convert to bytes (constant-time)
-    fn to_bytes(&self) -> [u8; 32];
-    
-    /// Convert from bytes (constant-time)
+    /// Convert from bytes
     fn from_bytes(bytes: &[u8; 32]) -> Option<Self>;
     
-    /// Random field element
-    fn random() -> Self;
+    /// Convert to bytes
+    fn to_bytes(&self) -> [u8; 32];
 }
 
 /// Trait for polynomial operations
 pub trait Polynomial<F: FieldElement>: 
-    Clone + Debug + Display + PartialEq + Eq
+    Clone + std::fmt::Debug + std::fmt::Display + PartialEq + Eq
 {
     /// Degree of the polynomial
     fn degree(&self) -> usize;
@@ -138,7 +93,7 @@ pub trait Polynomial<F: FieldElement>:
 
 /// Trait for STARK proof components
 pub trait StarkComponent<F: FieldElement>: 
-    Clone + Debug + Display + PartialEq + Eq
+    Clone + std::fmt::Debug + std::fmt::Display + PartialEq + Eq
 {
     /// Validate the component
     fn validate(&self) -> Result<(), TypeError>;
@@ -152,7 +107,7 @@ pub trait StarkComponent<F: FieldElement>:
 
 /// Trait for secret types with secure zeroization
 pub trait Secret: 
-    Clone + Debug + PartialEq + Eq
+    Clone + std::fmt::Debug + PartialEq + Eq
 {
     /// Zeroize the secret in memory
     fn zeroize(&mut self);
@@ -168,12 +123,11 @@ pub trait Secret:
 }
 
 /// Type-safe wrapper for cryptographic operations
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CryptoType<T> {
     /// The underlying value
     value: T,
     /// Type safety marker
-    #[serde(skip)]
     _phantom: core::marker::PhantomData<T>,
 }
 
@@ -203,12 +157,11 @@ impl<T> CryptoType<T> {
 }
 
 /// Type-safe wrapper for constant-time operations
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstantTime<T> {
     /// The underlying value
     value: T,
     /// Constant-time marker
-    #[serde(skip)]
     _phantom: core::marker::PhantomData<T>,
 }
 
@@ -238,12 +191,11 @@ impl<T> ConstantTime<T> {
 }
 
 /// Type-safe wrapper for memory-safe operations
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MemorySafe<T> {
     /// The underlying value
     value: T,
     /// Memory safety marker
-    #[serde(skip)]
     _phantom: core::marker::PhantomData<T>,
 }
 

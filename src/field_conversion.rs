@@ -19,12 +19,12 @@ impl FieldConverter for PrimeField64 {
     fn xfg_to_winterfell(xfg_element: PrimeField64) -> BaseElement {
         // Convert PrimeField64 to Winterfell BaseElement
         // Both use the same underlying field (F64), so we can safely convert
-        BaseElement::from(xfg_element.value())
+        BaseElement::from(xfg_element.value() as u32)
     }
     
     fn winterfell_to_xfg(winterfell_element: BaseElement) -> PrimeField64 {
         // Convert Winterfell BaseElement to PrimeField64
-        PrimeField64::new(winterfell_element.as_int())
+        PrimeField64::new(winterfell_element.as_int() as u64)
     }
 }
 
@@ -40,13 +40,13 @@ pub trait BatchFieldConverter {
 impl BatchFieldConverter for PrimeField64 {
     fn batch_xfg_to_winterfell(xfg_elements: &[PrimeField64]) -> Vec<BaseElement> {
         xfg_elements.iter()
-            .map(|&element| FieldConverter::xfg_to_winterfell(element))
+            .map(|&element| <PrimeField64 as FieldConverter>::xfg_to_winterfell(element))
             .collect()
     }
     
     fn batch_winterfell_to_xfg(winterfell_elements: &[BaseElement]) -> Vec<PrimeField64> {
         winterfell_elements.iter()
-            .map(|&element| FieldConverter::winterfell_to_xfg(element))
+            .map(|&element| <PrimeField64 as FieldConverter>::winterfell_to_xfg(element))
             .collect()
     }
 }
@@ -54,12 +54,14 @@ impl BatchFieldConverter for PrimeField64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::FieldElement;
+    use winter_math::FieldElement as WinterMathFieldElement;
     
     #[test]
     fn test_field_conversion_roundtrip() {
         let original = PrimeField64::new(12345);
-        let converted = FieldConverter::xfg_to_winterfell(original);
-        let back = FieldConverter::winterfell_to_xfg(converted);
+        let converted = <PrimeField64 as FieldConverter>::xfg_to_winterfell(original);
+        let back = <PrimeField64 as FieldConverter>::winterfell_to_xfg(converted);
         
         assert_eq!(original, back);
     }
@@ -72,8 +74,8 @@ mod tests {
             PrimeField64::new(3),
         ];
         
-        let winterfell_elements = BatchFieldConverter::batch_xfg_to_winterfell(&xfg_elements);
-        let back_to_xfg = BatchFieldConverter::batch_winterfell_to_xfg(&winterfell_elements);
+        let winterfell_elements = <PrimeField64 as BatchFieldConverter>::batch_xfg_to_winterfell(&xfg_elements);
+        let back_to_xfg = <PrimeField64 as BatchFieldConverter>::batch_winterfell_to_xfg(&winterfell_elements);
         
         assert_eq!(xfg_elements, back_to_xfg);
     }
@@ -81,7 +83,7 @@ mod tests {
     #[test]
     fn test_zero_conversion() {
         let xfg_zero = PrimeField64::zero();
-        let winterfell_zero = FieldConverter::xfg_to_winterfell(xfg_zero);
+        let winterfell_zero = <PrimeField64 as FieldConverter>::xfg_to_winterfell(xfg_zero);
         
         assert_eq!(winterfell_zero, BaseElement::ZERO);
     }
@@ -89,7 +91,7 @@ mod tests {
     #[test]
     fn test_one_conversion() {
         let xfg_one = PrimeField64::one();
-        let winterfell_one = FieldConverter::xfg_to_winterfell(xfg_one);
+        let winterfell_one = <PrimeField64 as FieldConverter>::xfg_to_winterfell(xfg_one);
         
         assert_eq!(winterfell_one, BaseElement::ONE);
     }
