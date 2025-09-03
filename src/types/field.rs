@@ -2,14 +2,7 @@
 //! 
 //! This module provides type-safe field element implementations for cryptographic operations,
 //! ensuring constant-time arithmetic and memory safety through Rust's type system.
-//! 
-//! ## Elite Senior Developer Standards
-//! 
-//! - **Constant-Time Operations**: All field arithmetic operations are constant-time
-//! - **Memory Safety**: Leveraging Rust's ownership system for cryptographic security
-//! - **Type Safety**: Comprehensive type definitions with compile-time guarantees
-//! - **Performance**: Zero-cost abstractions for field arithmetic operations
-//! - **Security**: Type-level prevention of timing attacks and vulnerabilities
+
 
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Neg};
@@ -267,6 +260,14 @@ impl FieldElement for PrimeField64 {
     
     fn from_bytes(bytes: &[u8; 32]) -> Option<Self> {
         Self::from_bytes_constant_time(bytes)
+    }
+    
+    fn value(&self) -> u64 {
+        self.value
+    }
+    
+    fn new(value: u64) -> Self {
+        Self::new(value)
     }
     
     fn random() -> Self {

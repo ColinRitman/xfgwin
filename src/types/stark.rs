@@ -59,6 +59,126 @@ impl<F: FieldElement> Display for StarkProof<F> {
     }
 }
 
+impl<F: FieldElement> StarkProof<F> {
+    /// Create a new STARK proof from components
+    pub fn new(
+        trace: ExecutionTrace<F>,
+        air: Air<F>,
+        commitments: Vec<MerkleCommitment<F>>,
+        fri_proof: FriProof<F>,
+        metadata: ProofMetadata,
+    ) -> Self {
+        Self {
+            trace,
+            air,
+            commitments,
+            fri_proof,
+            metadata,
+        }
+    }
+
+    /// TODO: Replace with real proof generation - this is temporary for testing only
+    /// Create a dummy proof for testing purposes
+    pub fn new_dummy() -> Self {
+        // Create dummy execution trace with 7 registers and 64 steps
+        let dummy_trace = ExecutionTrace {
+            columns: vec![
+                vec![F::new(12345u64); 64], // burn_amount
+                vec![F::new(12345u64); 64], // mint_amount  
+                vec![F::new(67890u64); 64], // txn_hash
+                vec![F::new(11111u64); 64], // recipient_hash
+                vec![F::new(0u64); 64],     // state
+                vec![F::new(22222u64); 64], // nullifier
+                vec![F::new(33333u64); 64], // commitment
+            ],
+            length: 64,
+            num_registers: 7,
+        };
+
+        // Create dummy AIR with basic constraints
+        let dummy_air = Air {
+            constraints: vec![], // TODO: Add real constraints
+            transition: TransitionFunction {
+                coefficients: vec![vec![F::new(1u64)]],
+                degree: 1,
+            },
+            boundary: BoundaryConditions {
+                constraints: vec![], // TODO: Add real boundary conditions
+            },
+            security_parameter: 128,
+        };
+
+        // Create dummy metadata
+        let dummy_metadata = ProofMetadata {
+            version: 1,
+            security_parameter: 128,
+            field_modulus: "0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47".to_string(),
+            proof_size: 1024, // TODO: Calculate real proof size
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        };
+
+        Self {
+            trace: dummy_trace,
+            air: dummy_air,
+            commitments: vec![], // TODO: Generate real commitments
+            fri_proof: FriProof {
+                layers: vec![], // TODO: Generate real FRI layers
+                queries: vec![], // TODO: Generate real queries
+                final_polynomial: vec![], // TODO: Generate real final polynomial
+            },
+            metadata: dummy_metadata,
+        }
+    }
+
+    /// TODO: Replace with real proof initialization - this is temporary for testing only
+    /// Create an empty proof for initialization
+    pub fn new_empty() -> Self {
+        // Create empty execution trace
+        let empty_trace = ExecutionTrace {
+            columns: vec![vec![F::new(0u64); 64]; 7],
+            length: 64,
+            num_registers: 7,
+        };
+
+        // Create empty AIR
+        let empty_air = Air {
+            constraints: vec![],
+            transition: TransitionFunction {
+                coefficients: vec![vec![F::new(0u64)]],
+                degree: 0,
+            },
+            boundary: BoundaryConditions {
+                constraints: vec![],
+            },
+            security_parameter: 128,
+        };
+
+        // Create empty metadata
+        let empty_metadata = ProofMetadata {
+            version: 0,
+            security_parameter: 0,
+            field_modulus: "0x0".to_string(),
+            proof_size: 0,
+            timestamp: 0,
+        };
+
+        Self {
+            trace: empty_trace,
+            air: empty_air,
+            commitments: vec![],
+            fri_proof: FriProof {
+                layers: vec![], // TODO: Generate real FRI layers
+                queries: vec![], // TODO: Generate real queries
+                final_polynomial: vec![], // TODO: Generate real final polynomial
+            },
+            metadata: empty_metadata,
+        }
+    }
+}
+
 /// Execution trace for STARK proof
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExecutionTrace<F: FieldElement> {

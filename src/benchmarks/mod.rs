@@ -1,25 +1,29 @@
 //! Performance Benchmarks and Optimization
-//! 
+//!
 //! This module provides comprehensive benchmarking tools for measuring and optimizing
 //! the performance of STARK proof generation and verification.
-//! 
+//!
 //! ## Features
-//! 
+//!
 //! - **Component Benchmarks**: Individual component performance testing
 //! - **End-to-End Benchmarks**: Complete proof generation and verification timing
 //! - **Memory Profiling**: Memory usage analysis and optimization
 //! - **Scalability Testing**: Performance scaling with input size
 //! - **Optimization Recommendations**: Automated performance suggestions
 
-use crate::types::FieldElement;
-use crate::types::field::PrimeField64;
-use crate::proof::StarkProver;
+use crate::air::constraints::ConstraintType;
+use crate::air::{Air, BoundaryConditions, Constraint, TransitionFunction};
+use crate::burn_mint_air::{BurnMintPublicInputs, XfgBurnMintAir};
+use crate::burn_mint_prover::XfgBurnMintProver;
+use crate::burn_mint_verifier::XfgBurnMintVerifier;
 use crate::proof::fri::FriProver;
 use crate::proof::merkle::MerkleTree;
-use crate::air::{Air, Constraint, TransitionFunction, BoundaryConditions};
-use crate::air::constraints::ConstraintType;
-use std::time::{Duration, Instant};
+use crate::proof::StarkProver;
+use crate::types::field::PrimeField64;
+use crate::types::FieldElement;
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
+use winterfell::{math::fields::f64::BaseElement, ProofOptions, TraceInfo};
 
 /// Benchmark results
 #[derive(Debug, Clone)]
@@ -115,7 +119,7 @@ impl<F: FieldElement> BenchmarkSuite<F> {
     /// Run field arithmetic benchmarks
     pub fn benchmark_field_arithmetic(&mut self, iterations: usize) {
         let start = Instant::now();
-        
+
         for _ in 0..iterations {
             let a = F::random();
             let b = F::random();
@@ -123,39 +127,40 @@ impl<F: FieldElement> BenchmarkSuite<F> {
             let _d = a * b;
             let _e = a.inverse();
         }
-        
+
         let duration = start.elapsed();
-        let result = BenchmarkResult::new(
-            "Field Arithmetic".to_string(),
-            duration,
-            iterations,
-        );
-        
+        let result = BenchmarkResult::new("Field Arithmetic".to_string(), duration, iterations);
+
         self.results.push(result);
     }
 
     /// Run polynomial operation benchmarks
     pub fn benchmark_polynomial_operations(&mut self, degree: usize, iterations: usize) {
         let start = Instant::now();
-        
+
         for _ in 0..iterations {
             let poly1 = generate_random_polynomial::<F>(degree);
             let poly2 = generate_random_polynomial::<F>(degree);
             // Simple polynomial operations (element-wise addition)
-            let _sum: Vec<F> = poly1.iter().zip(poly2.iter()).map(|(a, b)| *a + *b).collect();
+            let _sum: Vec<F> = poly1
+                .iter()
+                .zip(poly2.iter())
+                .map(|(a, b)| *a + *b)
+                .collect();
             // Simple polynomial operations (element-wise multiplication)
-            let _product: Vec<F> = poly1.iter().zip(poly2.iter()).map(|(a, b)| *a * *b).collect();
+            let _product: Vec<F> = poly1
+                .iter()
+                .zip(poly2.iter())
+                .map(|(a, b)| *a * *b)
+                .collect();
         }
-        
+
         let duration = start.elapsed();
-        let mut result = BenchmarkResult::new(
-            "Polynomial Operations".to_string(),
-            duration,
-            degree,
-        );
+        let mut result =
+            BenchmarkResult::new("Polynomial Operations".to_string(), duration, degree);
         result.iterations = iterations;
         result.add_metric("degree".to_string(), degree as f64);
-        
+
         self.results.push(result);
     }
 
@@ -163,13 +168,13 @@ impl<F: FieldElement> BenchmarkSuite<F> {
     pub fn benchmark_fri_proof(&mut self, polynomial_size: usize, iterations: usize) {
         let prover = FriProver::<F>::new(128);
         let polynomial = generate_random_polynomial::<F>(polynomial_size);
-        
+
         let start = Instant::now();
-        
+
         for _ in 0..iterations {
             let _proof = prover.prove(&polynomial);
         }
-        
+
         let duration = start.elapsed();
         let mut result = BenchmarkResult::new(
             "FRI Proof Generation".to_string(),
@@ -178,7 +183,7 @@ impl<F: FieldElement> BenchmarkSuite<F> {
         );
         result.iterations = iterations;
         result.add_metric("polynomial_size".to_string(), polynomial_size as f64);
-        
+
         self.results.push(result);
     }
 
@@ -187,25 +192,22 @@ impl<F: FieldElement> BenchmarkSuite<F> {
         let leaves: Vec<Vec<u8>> = (0..num_leaves)
             .map(|i| format!("leaf_{}", i).into_bytes())
             .collect();
-        
+
         let start = Instant::now();
-        
+
         for _ in 0..iterations {
             let tree = MerkleTree::new(&leaves);
             if let Ok(tree) = tree {
                 let _proof = tree.generate_proof(0);
             }
         }
-        
+
         let duration = start.elapsed();
-        let mut result = BenchmarkResult::new(
-            "Merkle Tree Construction".to_string(),
-            duration,
-            num_leaves,
-        );
+        let mut result =
+            BenchmarkResult::new("Merkle Tree Construction".to_string(), duration, num_leaves);
         result.iterations = iterations;
         result.add_metric("num_leaves".to_string(), num_leaves as f64);
-        
+
         self.results.push(result);
     }
 
@@ -214,22 +216,19 @@ impl<F: FieldElement> BenchmarkSuite<F> {
         let prover = StarkProver::new(128);
         let air = create_test_air::<F>();
         let initial_state = vec![F::zero(); 2];
-        
+
         let start = Instant::now();
-        
+
         for _ in 0..iterations {
             let _proof = prover.prove(&air, &initial_state, trace_size);
         }
-        
+
         let duration = start.elapsed();
-        let mut result = BenchmarkResult::new(
-            "STARK Proof Generation".to_string(),
-            duration,
-            trace_size,
-        );
+        let mut result =
+            BenchmarkResult::new("STARK Proof Generation".to_string(), duration, trace_size);
         result.iterations = iterations;
         result.add_metric("trace_size".to_string(), trace_size as f64);
-        
+
         self.results.push(result);
     }
 
@@ -253,45 +252,240 @@ impl<F: FieldElement> BenchmarkSuite<F> {
     pub fn generate_report(&self) -> String {
         let mut report = String::new();
         report.push_str("=== STARK Performance Benchmark Report ===\n\n");
-        
+
         for result in &self.results {
             report.push_str(&format!("{}\n", result));
         }
-        
+
         report.push_str("\n=== Performance Analysis ===\n");
         report.push_str(&self.analyze_performance());
-        
+
         report
     }
 
     /// Analyze performance and provide recommendations
     fn analyze_performance(&self) -> String {
         let mut analysis = String::new();
-        
+
         // Find bottlenecks
         let mut slowest_ops = self.results.clone();
         slowest_ops.sort_by(|a, b| b.duration.cmp(&a.duration));
-        
+
         analysis.push_str("Slowest operations:\n");
         for (i, result) in slowest_ops.iter().take(3).enumerate() {
-            analysis.push_str(&format!("{}. {}: {}\n", 
-                i + 1, 
-                result.operation, 
+            analysis.push_str(&format!(
+                "{}. {}: {}\n",
+                i + 1,
+                result.operation,
                 format_duration(result.duration)
             ));
         }
-        
+
         analysis.push_str("\nOptimization recommendations:\n");
-        
+
         // Generate recommendations based on results
         for result in &self.results {
             if result.ops_per_second() < 1000.0 {
-                analysis.push_str(&format!("- {}: Consider optimization ({} ops/sec)\n", 
-                    result.operation, result.ops_per_second()));
+                analysis.push_str(&format!(
+                    "- {}: Consider optimization ({} ops/sec)\n",
+                    result.operation,
+                    result.ops_per_second()
+                ));
             }
         }
-        
+
         analysis
+    }
+
+    /// Benchmark Winterfell STARK proof generation
+    pub fn benchmark_winterfell_proof_generation(
+        &mut self,
+        trace_length: usize,
+        iterations: usize,
+    ) {
+        let start = Instant::now();
+        let mut successful_proofs = 0;
+
+        for _ in 0..iterations {
+            // Create prover
+            let prover = XfgBurnMintProver::new(128);
+
+            // Generate test data
+            let secret = [1, 2, 3, 4, 5, 6, 7, 8];
+            let burn_amount = 1000;
+            let mint_amount = 1000;
+            let network_id = 12345;
+            let recipient = [0x12u8; 20]; // Example Ethereum address
+
+            // Generate proof
+            let tx_prefix_hash = [0u8; 32]; // Placeholder for benchmark
+            match prover.prove_burn_mint(burn_amount, mint_amount, tx_prefix_hash, &recipient, &secret, network_id, 42161, 1)
+            {
+                Ok(_) => successful_proofs += 1,
+                Err(_) => continue,
+            }
+        }
+
+        let duration = start.elapsed();
+        let mut result = BenchmarkResult::new(
+            format!("Winterfell Proof Generation ({} steps)", trace_length),
+            duration,
+            trace_length,
+        );
+        result.iterations = iterations;
+        result.add_metric(
+            "success_rate".to_string(),
+            successful_proofs as f64 / iterations as f64,
+        );
+
+        self.results.push(result);
+    }
+
+    /// Benchmark Winterfell STARK proof verification
+    pub fn benchmark_winterfell_proof_verification(
+        &mut self,
+        trace_length: usize,
+        iterations: usize,
+    ) {
+        let start = Instant::now();
+        let mut successful_verifications = 0;
+
+        // Create a sample proof for verification
+        let prover = XfgBurnMintProver::new(128);
+        let secret = [1, 2, 3, 4, 5, 6, 7, 8];
+        let burn_amount = 1000;
+        let mint_amount = 1000;
+        let network_id = 12345;
+
+        let recipient = [0x12u8; 20]; // Example Ethereum address
+        let tx_prefix_hash = [0u8; 32]; // Placeholder for benchmark
+        let sample_proof =
+            match prover.prove_burn_mint(burn_amount, mint_amount, tx_prefix_hash, &recipient, &secret, network_id, 42161, 1)
+            {
+                Ok(proof) => proof,
+                Err(_) => {
+                    // Add failed result
+                    let mut result = BenchmarkResult::new(
+                        format!("Winterfell Proof Verification ({} steps)", trace_length),
+                        Duration::ZERO,
+                        trace_length,
+                    );
+                    result.iterations = iterations;
+                    result.add_metric("success_rate".to_string(), 0.0);
+                    self.results.push(result);
+                    return;
+                }
+            };
+
+        let verifier = XfgBurnMintVerifier::new(128);
+
+        for _ in 0..iterations {
+            match verifier.verify_burn_mint(
+                &sample_proof,
+                burn_amount,
+                mint_amount,
+                network_id as u64, // Convert to u64 for txn_hash
+                &recipient,
+                network_id,
+                42161, // Arbitrum One
+                1,     // Commitment version
+            ) {
+                Ok(is_valid) => {
+                    if is_valid {
+                        successful_verifications += 1;
+                    }
+                }
+                Err(_) => continue,
+            }
+        }
+
+        let duration = start.elapsed();
+        let mut result = BenchmarkResult::new(
+            format!("Winterfell Proof Verification ({} steps)", trace_length),
+            duration,
+            trace_length,
+        );
+        result.iterations = iterations;
+        result.add_metric(
+            "success_rate".to_string(),
+            successful_verifications as f64 / iterations as f64,
+        );
+
+        self.results.push(result);
+    }
+
+    /// Benchmark Winterfell trace generation
+    pub fn benchmark_winterfell_trace_generation(
+        &mut self,
+        trace_length: usize,
+        iterations: usize,
+    ) {
+        let start = Instant::now();
+
+        for _ in 0..iterations {
+            // Create AIR and generate trace
+            let trace_info = TraceInfo::new(7, trace_length);
+            let public_inputs = BurnMintPublicInputs {
+                burn_amount: BaseElement::from(1000u32),
+                mint_amount: BaseElement::from(1000u32),
+                txn_hash: BaseElement::from(12345u32),
+                recipient_hash: BaseElement::from(67890u32),
+                state: BaseElement::from(0u32),
+
+                // Full tx prefix hash (32 bytes as 4 limbs)
+                tx_prefix_hash_0: BaseElement::from(12345u32),
+                tx_prefix_hash_1: BaseElement::from(67890u32),
+                tx_prefix_hash_2: BaseElement::from(11111u32),
+                tx_prefix_hash_3: BaseElement::from(22222u32),
+
+                // Network identifiers
+                network_id: BaseElement::from(4u32),          // Fuego testnet
+                target_chain_id: BaseElement::from(42161u32), // Arbitrum One
+                commitment_version: BaseElement::from(1u32),  // Version 1
+            };
+            let secret = BaseElement::from(67305985u32);
+
+            let air = XfgBurnMintAir::new_with_secret(
+                trace_info,
+                public_inputs,
+                secret,
+                ProofOptions::new(42, 8, 4, winterfell::FieldExtension::None, 8, 31),
+            );
+
+            let _trace = air.build_trace();
+        }
+
+        let duration = start.elapsed();
+        let mut result = BenchmarkResult::new(
+            format!("Winterfell Trace Generation ({} steps)", trace_length),
+            duration,
+            trace_length,
+        );
+        result.iterations = iterations;
+
+        self.results.push(result);
+    }
+
+    /// Run comprehensive Winterfell benchmark suite
+    pub fn run_winterfell_benchmark_suite(&mut self) {
+        let trace_lengths = vec![64, 128, 256];
+        let iterations = 5; // Reduced for faster testing
+
+        for trace_length in trace_lengths {
+            println!(
+                "Benchmarking Winterfell with trace length: {}",
+                trace_length
+            );
+
+            // Trace generation
+            self.benchmark_winterfell_trace_generation(trace_length, iterations);
+
+            // Proof generation
+            self.benchmark_winterfell_proof_generation(trace_length, iterations);
+
+            // Proof verification
+            self.benchmark_winterfell_proof_verification(trace_length, iterations);
+        }
     }
 }
 
@@ -330,13 +524,13 @@ impl PerformanceProfiler {
     pub fn report(&self) -> String {
         let mut report = String::new();
         report.push_str("=== Performance Profiling Report ===\n\n");
-        
+
         for (name, measurements) in &self.measurements {
             let total: Duration = measurements.iter().sum();
             let avg = total / measurements.len() as u32;
             let min = measurements.iter().min().unwrap_or(&Duration::ZERO);
             let max = measurements.iter().max().unwrap_or(&Duration::ZERO);
-            
+
             report.push_str(&format!("{}:\n", name));
             report.push_str(&format!("  Total: {}\n", format_duration(total)));
             report.push_str(&format!("  Average: {}\n", format_duration(avg)));
@@ -344,7 +538,7 @@ impl PerformanceProfiler {
             report.push_str(&format!("  Max: {}\n", format_duration(*max)));
             report.push_str(&format!("  Count: {}\n\n", measurements.len()));
         }
-        
+
         report
     }
 }
@@ -387,17 +581,24 @@ impl MemoryTracker {
     pub fn report(&self) -> String {
         let mut report = String::new();
         report.push_str("=== Memory Usage Report ===\n\n");
-        
+
         for (operation, usage) in &self.measurements {
-            report.push_str(&format!("{}: {} bytes ({:.2} MB)\n", 
-                operation, usage, *usage as f64 / 1024.0 / 1024.0));
+            report.push_str(&format!(
+                "{}: {} bytes ({:.2} MB)\n",
+                operation,
+                usage,
+                *usage as f64 / 1024.0 / 1024.0
+            ));
         }
-        
+
         if let Some(max_usage) = self.measurements.iter().map(|(_, usage)| usage).max() {
-            report.push_str(&format!("\nPeak memory usage: {} bytes ({:.2} MB)\n", 
-                max_usage, *max_usage as f64 / 1024.0 / 1024.0));
+            report.push_str(&format!(
+                "\nPeak memory usage: {} bytes ({:.2} MB)\n",
+                max_usage,
+                *max_usage as f64 / 1024.0 / 1024.0
+            ));
         }
-        
+
         report
     }
 }
@@ -411,13 +612,15 @@ fn generate_random_polynomial<F: FieldElement>(degree: usize) -> Vec<F> {
 
 /// Create test AIR
 fn create_test_air<F: FieldElement>() -> Air<F> {
-    let constraints = vec![
-        Constraint::new(vec![F::one(), F::zero()], 1, ConstraintType::Transition),
-    ];
-    
+    let constraints = vec![Constraint::new(
+        vec![F::one(), F::zero()],
+        1,
+        ConstraintType::Transition,
+    )];
+
     let transition = TransitionFunction::new(vec![vec![F::one()]], 1);
     let boundary = BoundaryConditions::new(vec![]);
-    
+
     Air::new(constraints, transition, boundary, 128)
 }
 
@@ -467,7 +670,7 @@ mod tests {
             std::thread::sleep(Duration::from_millis(1));
             section.end(&mut profiler);
         }
-        
+
         let report = profiler.report();
         assert!(report.contains("test"));
     }
@@ -476,9 +679,23 @@ mod tests {
     fn test_memory_tracker() {
         let mut tracker = MemoryTracker::new();
         tracker.track("test", 1024);
-        
+
         let report = tracker.report();
         assert!(report.contains("test"));
         assert!(report.contains("1024"));
+    }
+
+    #[test]
+    fn test_winterfell_trace_generation_benchmark() {
+        let mut suite = BenchmarkSuite::<PrimeField64>::new();
+        suite.benchmark_winterfell_trace_generation(64, 3);
+        assert!(suite.results().len() > 0);
+    }
+
+    #[test]
+    fn test_winterfell_benchmark_suite() {
+        let mut suite = BenchmarkSuite::<PrimeField64>::new();
+        suite.run_winterfell_benchmark_suite();
+        assert!(suite.results().len() > 0);
     }
 }

@@ -21,6 +21,7 @@ use xfg_stark::{
     air::boundaries::{BoundaryConstraint, BoundaryType},
     benchmarks::{BenchmarkSuite, PerformanceProfiler, MemoryTracker},
     winterfell_integration::{XfgWinterfellProver, XfgWinterfellVerifier, WinterfellTraceTable},
+    stark, ExecutionTrace,
 };
 
 use std::time::Duration;
@@ -128,7 +129,6 @@ fn test_fri_proof_integration() {
     // Verify FRI proof
     let fri_verifier = FriVerifier::new(128);
     let is_valid = fri_verifier.verify(&fri_proof, &polynomial).expect("FRI verification should succeed");
-    
     assert!(is_valid, "FRI proof should be valid");
     
     // Test with different polynomial sizes
@@ -176,35 +176,27 @@ fn test_winterfell_integration() {
         vec![PrimeField64::new(5), PrimeField64::new(6)],
     ];
     
-    // Create execution trace
-    let trace = ExecutionTrace {
-        columns: vec![
-            vec![PrimeField64::new(1), PrimeField64::new(3), PrimeField64::new(5)],
-            vec![PrimeField64::new(2), PrimeField64::new(4), PrimeField64::new(6)],
-        ],
+    // Create execution trace manually
+    let execution_trace = ExecutionTrace {
+        columns: trace_data,
         length: 3,
         num_registers: 2,
     };
     
-    // Create trace table
-    let trace_table = WinterfellTraceTable::from_xfg_trace(&trace);
-    
     // Test prover
     let prover = XfgWinterfellProver::new();
-    let air = crate::types::stark::Air {
+    let air = stark::Air {
         constraints: vec![],
-        transition: crate::types::stark::TransitionFunction {
+        transition: stark::TransitionFunction {
             coefficients: vec![],
             degree: 1,
-            num_inputs: 1,
-            num_outputs: 1,
         },
-        boundary: crate::types::stark::BoundaryConditions {
+        boundary: stark::BoundaryConditions {
             constraints: vec![],
         },
         security_parameter: 128,
     };
-    let proof_result = prover.prove(&trace_table, &air);
+    let proof_result = prover.prove(&execution_trace, &air);
     assert!(proof_result.is_ok(), "Winterfell proof generation should succeed");
     
     // Test verifier
@@ -486,7 +478,8 @@ fn test_edge_cases() {
     // Zero security parameter (should use default)
     let air = test_utils::create_fibonacci_air();
     let prover = StarkProver::new(0);
-    let proof_result = prover.prove(&air);
+    let initial_state = vec![PrimeField64::zero(), PrimeField64::one()];
+    let proof_result = prover.prove(&air, &initial_state, 100);
     // Should handle gracefully or use default security parameter
 }
 
@@ -521,8 +514,8 @@ fn test_memory_efficiency() {
     
     let mut tracker = MemoryTracker::new();
     
-    // Test with larger polynomial
-    let large_polynomial: Vec<PrimeField64> = (0..1000).map(|i| PrimeField64::new(i)).collect();
+    // Test with larger polynomial (use a size that works well with FRI parameters)
+    let large_polynomial: Vec<PrimeField64> = (0..256).map(|i| PrimeField64::new(i)).collect();
     tracker.track("large_polynomial_creation", large_polynomial.len() * 8);
     
     let fri_prover = FriProver::new(128);

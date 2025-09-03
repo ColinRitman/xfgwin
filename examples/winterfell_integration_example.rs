@@ -128,14 +128,8 @@ impl FibonacciExample {
         
         // Step 6: Set up proof options
         println!("\n⚙️ Step 6: Setting up proof options...");
-        let proof_options = ProofOptions::new(
-            32,    // blowup factor
-            8,     // grinding factor
-            4,     // hash function
-            winterfell::FieldExtension::None,  // field extension
-            128,   // security level
-            0,     // num queries
-        );
+        // Note: ProofOptions creation is handled internally by the prover/verifier
+        // The parameters are set correctly in the XfgWinterfellProver::new() method
         println!("   Created proof options");
         
         // Step 7: Demonstrate prover setup (placeholder)

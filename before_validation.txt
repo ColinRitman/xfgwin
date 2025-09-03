@@ -1,0 +1,26 @@
+    // Validate transaction hash length (Fuego uses 32-byte hashes, 64 hex chars)
+    if package.burn_transaction.transaction_hash.len() != 64 {
+        println!("   ❌ Transaction hash should be 64 hex characters for Fuego");
+        return Err(XfgStarkError::ParseError("Invalid Fuego transaction hash length".to_string()));
+    }
+
+    // Validate block height is reasonable (after genesis and before current)
+    if package.burn_transaction.block_height < 800_000 {
+        println!("   ⚠️  Block height {} is before XFG burn implementation", package.burn_transaction.block_height);
+    }
+
+    const CURRENT_BLOCK_HEIGHT: u64 = 961_767; // Current Fuego blockchain height
+    if package.burn_transaction.block_height > CURRENT_BLOCK_HEIGHT {
+        println!("   ❌ Block height {} is in the future", package.burn_transaction.block_height);
+        return Err(XfgStarkError::ParseError("Block height cannot be in the future".to_string()));
+    }
+
+    // Validate network ID format
+    if package.burn_transaction.network_id.is_empty() {
+        println!("   ❌ Network ID is required");
+        return Err(XfgStarkError::ParseError("Network ID cannot be empty".to_string()));
+    }
+
+    println!("   ✅ Fuego blockchain validation passed");
+    Ok(())
+}

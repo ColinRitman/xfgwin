@@ -2,14 +2,7 @@
 //! 
 //! This module provides comprehensive type definitions for the XFG STARK proof system,
 //! ensuring type safety, memory safety, and cryptographic security at the type level.
-//! 
-//! ## Elite Senior Developer Standards
-//! 
-//! - **Type Safety**: Comprehensive type definitions with compile-time guarantees
-//! - **Memory Safety**: Leveraging Rust's ownership system for cryptographic security
-//! - **Cryptographic Security**: Type-level prevention of timing attacks and vulnerabilities
-//! - **Performance**: Zero-cost abstractions for all type operations
-//! - **Documentation**: Mathematical notation and comprehensive examples
+
 
 use core::fmt::{Debug, Display};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -99,6 +92,12 @@ pub trait FieldElement:
     
     /// Convert from bytes (constant-time)
     fn from_bytes(bytes: &[u8; 32]) -> Option<Self>;
+    
+    /// Get the raw value as u64
+    fn value(&self) -> u64;
+    
+    /// Create a new field element from a u64 value
+    fn new(value: u64) -> Self;
     
     /// Random field element
     fn random() -> Self;
