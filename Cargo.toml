@@ -21,7 +21,9 @@ sha2 = "0.10"
 rand = "0.8"
 anyhow = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
-clap = "3.2"
+clap = { version = "4.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+indicatif = "0.17"
 
 # Winterfell framework dependencies
 winterfell = "0.8"

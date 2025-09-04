@@ -559,7 +559,13 @@ fn verify_eldernode_consistency(
 
 // Helper functions for hex conversion
 fn hex_to_bytes(hex: &str) -> Result<Vec<u8>, hex::FromHexError> {
-    hex::decode(hex)
+    // Remove 0x prefix if present
+    let hex_clean = if hex.starts_with("0x") {
+        &hex[2..]
+    } else {
+        hex
+    };
+    hex::decode(hex_clean)
 }
 
 fn hex_to_u64(hex: &str) -> Result<u64, XfgStarkError> {
