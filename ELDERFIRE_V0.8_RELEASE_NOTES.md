@@ -4,7 +4,7 @@
 
 **Release Date:** September 4, 2025  
 **Version:** 2.0 - Enhanced  
-**Tag:** v0.8.2
+**Tag:** v0.8.3
 
 ## 🎉 What's New in ElderFire v0.8
 
@@ -47,7 +47,7 @@ The release includes a complete distribution package with:
 ```bash
 git clone https://github.com/ColinRitman/xfgwin.git
 cd xfgwin
-git checkout v0.8.2
+git checkout v0.8.3
 cargo build --bin xfg-stark-cli --release
 ```
 
@@ -90,6 +90,7 @@ This CLI can be integrated with:
 - Enhanced compatibility with different platforms
 - Resolved compilation warnings
 - **Fixed Windows compatibility in GitHub Actions workflow**
+- **Simplified cross-platform workflow with consistent bash commands**
 
 ## 🔮 Future Roadmap
 - Enhanced Eldernode verification
@@ -105,4 +106,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-**🔥 ElderFire v0.8.2 - Igniting the Future of XFG STARK Proofs 🔥**
+**🔥 ElderFire v0.8.3 - Igniting the Future of XFG STARK Proofs 🔥**
