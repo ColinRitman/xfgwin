@@ -47,12 +47,21 @@ jobs:
     - name: Build STARK CLI
       run: |
         cargo build --bin xfg-stark-cli --release
-        ls -la target/release/
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          dir target\release\
+        else
+          ls -la target/release/
+        fi
+      shell: bash
 
     - name: Create distribution package
       run: |
         mkdir -p dist
-        cp target/release/${{ matrix.binary_name }} dist/
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          copy target\release\${{ matrix.binary_name }} dist\
+        else
+          cp target/release/${{ matrix.binary_name }} dist/
+        fi
         cp scripts/auto_stark_proof.sh dist/ 2>/dev/null || echo "Script not found"
         cp scripts/stark_proof_generator.py dist/ 2>/dev/null || echo "Script not found"
         cp scripts/progress_logger.py dist/ 2>/dev/null || echo "Script not found"
@@ -85,10 +94,20 @@ jobs:
         chmod +x dist/*.py 2>/dev/null || true
         
         # Create archive
-        tar -czf ${{ matrix.artifact_name }}.tar.gz -C dist .
-        zip -r ${{ matrix.artifact_name }}.zip dist/
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          tar -czf ${{ matrix.artifact_name }}.tar.gz -C dist .
+          powershell Compress-Archive -Path dist\* -DestinationPath ${{ matrix.artifact_name }}.zip
+        else
+          tar -czf ${{ matrix.artifact_name }}.tar.gz -C dist .
+          zip -r ${{ matrix.artifact_name }}.zip dist/
+        fi
         
-        ls -la *.tar.gz *.zip
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          dir *.tar.gz *.zip
+        else
+          ls -la *.tar.gz *.zip
+        fi
+      shell: bash
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
