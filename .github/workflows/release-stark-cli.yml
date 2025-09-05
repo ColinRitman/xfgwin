@@ -87,7 +87,11 @@ jobs:
         
         # Create archive
         tar -czf ${{ matrix.artifact_name }}.tar.gz -C dist .
-        zip -r ${{ matrix.artifact_name }}.zip dist/
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          powershell Compress-Archive -Path dist\* -DestinationPath ${{ matrix.artifact_name }}.zip
+        else
+          zip -r ${{ matrix.artifact_name }}.zip dist/
+        fi
         
         ls -la *.tar.gz *.zip
       shell: bash
