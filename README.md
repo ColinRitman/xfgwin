@@ -215,7 +215,7 @@ The implementation is based on:
 
 ## 🧑‍💻 Joining the Citadel
 
-We welcome new maesters to xfgwin! Please see Archmæster or our [How to become a mæster](CONTRIBUTING.md) for details.
+We welcome new maesters to xfgwin! Please see Archmæster or our [How to become a mæster](https://github.com/ColinRitman/xfgwin/pulls) for details.
 
 ##  Acknowledgments
 
