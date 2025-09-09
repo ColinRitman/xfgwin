@@ -1,20 +1,20 @@
-# 🏰 XFG Winterfell STARK Proof Citadel
+# 🏰 XFG Winterfell STARK Proofs
 
 [![Rust](https://img.shields.io/badge/rust-1.70+-blue.svg)](https://www.rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Winterfell Standards](https://img.shields.io/badge/Winterfell%20Standards-Enforced-green.svg)](https://github.com/ColinRitman/xfgwinter)                                                                                       
 
-**🏰 XFG Winterfell STARK Proof Citadel - Where Cryptography Meets the North**
+**🏰 XFG Winterfell STARK Proofs ❄️ Where Cryptography Meets the North**
 
 A fortress of cryptographic strength, implementing STARK (Scalable Transparent Argument of Knowledge) proofs with the unyielding security of Winterfell's walls, memory safety as solid as the castle's foundation, and zero-cost abstractions that would make even the most cunning Lannister envious.                                               
 
-## ⚔️ The Citadel's Arsenal
+## ⚔️ The XFG Winterfell Arsenal
 
 ### 🛡️ Core Defenses
 
 - **⚔️ Field Arithmetic**: Type-safe field element operations with constant-time implementations that would make the Night's Watch proud
-- **📜 Polynomial Operations**: Efficient polynomial arithmetic and evaluation, as precise as Maester Luwin's calculations
-- **🏰 STARK Proof System**: Complete STARK proof generation and verification, the cryptographic equivalent of Winterfell's defenses
+- **📜 Polynomial Operations**: Efficient polynomial arithmetic and evaluation, more precise than even Mæster Luwin's calculations
+- **🏰 STARK Proof System**: Complete STARK proof generation and verification- the cryptographic equivalent of Winterfell's defenses
 - **🔮 Type System**: Comprehensive type definitions for all cryptographic operations, as thorough as the Stark family tree
 
 ### 🛡️ Security Fortifications
@@ -22,21 +22,22 @@ A fortress of cryptographic strength, implementing STARK (Scalable Transparent A
 - Constant-time cryptographic operations that never reveal their secrets
 - Secure secret management with zeroization.
 - Type-level prevention of timing attacks, more reliable than the Wall's magic
-- Memory safety through Rust's type system, as strong as Valyrian steel
-- Comprehensive error handling with Result types, as true as the word of Ned Stark's son.
+- Memory safety through Rust's type system as strong as Valyrian steel
+- Comprehensive error handling with Result types as true as the word of Ned Stark's son.
 
 ### ⚡ Performance Weapons
 
 - Zero-cost abstractions for all operations as efficient as Arya's water dancing
 - Optimized field arithmetic implementations as fast as direwolves
-- Efficient polynomial evaluation algorithms as precise as Bran's visions
-- Minimal runtime overhead for type safety as light as a feather
+- Efficient polynomial evaluation algorithms as precise as one of The L3-eyed Raven's visions
+- Minimal runtime overhead for type safety as light as a crow's feather
 
 ## 🏗️ Building Winterfell
 
 ### Prerequisites
+#### The forge of the North
 
-- Rust 1.70+ ([Install Rust](https://rustup.rs/)) - The forge of the North
+- Rust 1.70+ ([Install Rust](https://rustup.rs/)) - 
 - Cargo (comes with Rust)
 
 ### Construction
@@ -56,7 +57,7 @@ cargo test
 cargo bench
 ```
 
-## 🏰 Citadel Architecture
+## 🏰 Citadelian Architecture
 
 ```
 xfgwinter/
@@ -79,7 +80,7 @@ xfgwinter/
 └── docs/                   # Documentation - The Archives
 ```
 
-## ⚔️ Wielding the Citadel's Power
+## ⚔️ Wielding XFG-Winterfell's Power
 
 ### Basic Field Operations
 
@@ -207,10 +208,10 @@ cargo doc --open
 
 The implementation is based on:
 
-- **STARK Proofs**: Scalable Transparent Arguments of Knowledge - The ancient magic of the North
-- **Field Arithmetic**: Finite field operations for cryptographic security - The foundation of Winterfell
-- **Polynomial Commitment Schemes**: Efficient polynomial evaluation and commitment - The maester's wisdom
-- **FRI Protocol**: Fast Reed-Solomon Interactive Oracle Proof - The raven's message system
+- **STARK Proofs**: [Scalable Transparent Arguments of Knowledge](https://eprint.iacr.org/2018/046.pdf&ved=2ahUKEwjftqeb0sqPAxXAM2IAHR3DMWsQFnoECCEQAQ&usg=AOvVaw3U0RHxBdGk62bzwjc2PIju) - The ancient magic of the North
+- **Field Arithmetic**: [Finite field operations for cryptographic security](https://www.anubhavprasadsharma.com/files/Sharma_FiniteFieldArithmeticAndItsApplicationsToCryptography.pdf&ved=2ahUKEwiH6eHq0sqPAxXvFVkFHZDMDiMQFnoECBcQAQ&usg=AOvVaw14hLfV867hrCUdFhfS-eJg) - The foundation of Winterfell
+- **Polynomial Commitment Schemes**: [Efficient polynomial evaluation and commitment](https://eprint.iacr.org/2020/081.pdf) - The maester's wisdom
+- **[FRI Protocol](https://eprint.iacr.org/2024/1161)**: Fast Reed-Solomon Interactive Oracle Proof - The raven's message system
 
 ## 🧑‍💻 Joining the Citadel
 
