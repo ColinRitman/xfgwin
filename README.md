@@ -228,7 +228,8 @@ This project is licensed under MIT License - see the [LICENSE](LICENSE) file for
 
 ---
 
-**2025 © Elderfire Privacy Council**
+**2025 © Elderfire Privacy Group** 
 
+**<sub>2025 © USEXFG</sub>**
 
-<sub>Winter is coming...</sub>
+<sub>Winter is coming</sub>
