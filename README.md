@@ -208,19 +208,18 @@ cargo doc --open
 
 The implementation is based on:
 
-- **STARK Proofs**: [Scalable Transparent Arguments of Knowledge](https://eprint.iacr.org/2018/046.pdf&ved=2ahUKEwjftqeb0sqPAxXAM2IAHR3DMWsQFnoECCEQAQ&usg=AOvVaw3U0RHxBdGk62bzwjc2PIju) - The ancient magic of the North
-- **Field Arithmetic**: [Finite field operations for cryptographic security](https://www.anubhavprasadsharma.com/files/Sharma_FiniteFieldArithmeticAndItsApplicationsToCryptography.pdf&ved=2ahUKEwiH6eHq0sqPAxXvFVkFHZDMDiMQFnoECBcQAQ&usg=AOvVaw14hLfV867hrCUdFhfS-eJg) - The foundation of Winterfell
-- **Polynomial Commitment Schemes**: [Efficient polynomial evaluation and commitment](https://eprint.iacr.org/2020/081.pdf) - The maester's wisdom
+- **[STARK Proofs](https://eprint.iacr.org/2018/046.pdf&ved=2ahUKEwjftqeb0sqPAxXAM2IAHR3DMWsQFnoECCEQAQ&usg=AOvVaw3U0RHxBdGk62bzwjc2PIju)**: Scalable Transparent Arguments of Knowledge - The ancient magic of the North
+- **[Field Arithmetic](https://www.anubhavprasadsharma.com/files/Sharma_FiniteFieldArithmeticAndItsApplicationsToCryptography.pdf&ved=2ahUKEwiH6eHq0sqPAxXvFVkFHZDMDiMQFnoECBcQAQ&usg=AOvVaw14hLfV867hrCUdFhfS-eJg)**: Finite field operations for cryptographic security - The foundation of Winterfell
+- **[Polynomial Commitment Schemes](https://eprint.iacr.org/2020/081.pdf)**: Efficient polynomial evaluation and commitment - The maester's wisdom
 - **[FRI Protocol](https://eprint.iacr.org/2024/1161)**: Fast Reed-Solomon Interactive Oracle Proof - The raven's message system
-
-## 🧑‍💻 Joining the Citadel
-
-We welcome new maesters to xfgwin! Please see Archmæster or our [How to become a mæster](https://github.com/ColinRitman/xfgwin/pulls) for details.
 
 ##  Acknowledgments
 
 - **[Winterfell by Meta](https://github.com/facebook/winterfell)**: cryptographic primitives and STARK implementation patterns
 
+## 🧑‍💻 Joining the Citadel
+
+We welcome new maesters to xfgwin! Please see Archmæster or our [How to become a mæster](https://github.com/ColinRitman/xfgwin/pulls) for details.
 ## 🔗 Links
 
 - [Repository](https://github.com/ColinRitman/xfgwin)
