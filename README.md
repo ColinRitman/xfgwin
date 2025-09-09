@@ -23,7 +23,7 @@ A fortress of cryptographic strength, implementing STARK (Scalable Transparent A
 - Secure secret management with zeroization.
 - Type-level prevention of timing attacks, more reliable than the Wall's magic
 - Memory safety through Rust's type system, as strong as Valyrian steel
-- Comprehensive error handling with Result types, as true as Ned Stark's word.
+- Comprehensive error handling with Result types, as true as the word of Ned Stark's son.
 
 ### ⚡ Performance Weapons
 
@@ -32,7 +32,7 @@ A fortress of cryptographic strength, implementing STARK (Scalable Transparent A
 - Efficient polynomial evaluation algorithms as precise as Bran's visions
 - Minimal runtime overhead for type safety as light as a feather
 
-## 🏗️ Building the Citadel
+## 🏗️ Building Winterfell
 
 ### Prerequisites
 
@@ -212,9 +212,9 @@ The implementation is based on:
 - **Polynomial Commitment Schemes**: Efficient polynomial evaluation and commitment - The maester's wisdom
 - **FRI Protocol**: Fast Reed-Solomon Interactive Oracle Proof - The raven's message system
 
-## 📜 Joining the Citadel
+## 🧑‍💻 Joining the Citadel
 
-We welcome new maesters to xfgwin! Please see Samwell Tarley or our [How to become a mæster](CONTRIBUTING.md) for details.
+We welcome new maesters to xfgwin! Please see Archmæster or our [How to become a mæster](CONTRIBUTING.md) for details.
 
 ##  Acknowledgments
 
