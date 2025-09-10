@@ -200,7 +200,7 @@ If you encounter issues:
 
 After generating your STARK proof:
 
-1. **Submit to HEAT contract** with Eldernode validation proof
+1. **Submit to HEAT contract** with Eldernode verification proof
 2. **Wait for confirmation** on the blockchain
 3. **Receive HEAT tokens** in your wallet
 4. **Verify the mint** on the HEAT contract
