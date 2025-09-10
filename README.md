@@ -1,10 +1,11 @@
-# 🏰 XFG Winterfell STARK Proofs
+# <img height=42px width=42px src="https://github.com/usexfg/fuego-data/blob/6f709a802e9f7da2244624946b627462fa4592ec/fuego-images/wolf-right.svg"></img> XFG STARK Proofs 
 
 [![Rust](https://img.shields.io/badge/rust-1.70+-blue.svg)](https://www.rust-lang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Winterfell Standards](https://img.shields.io/badge/Winterfell%20Standards-Enforced-green.svg)](https://github.com/ColinRitman/xfgwinter)                                                                                       
+<img src="https://dreamgifs5.files.wordpress.com/2016/06/untitled-2314.gif?w=760"></img>
 
-**🏰 XFG Winterfell STARK Proofs ❄️ Where Cryptography Meets the North**
+**🏰 Winterfell XFG STARKs ❄️ Where Cryptography Meets the North**
 
 A fortress of cryptographic strength, implementing STARK (Scalable Transparent Argument of Knowledge) proofs with the unyielding security of Winterfell's walls, memory safety as solid as the castle's foundation, and zero-cost abstractions that would make even the most cunning Lannister envious.                                               
 
@@ -80,7 +81,7 @@ xfgwinter/
 └── docs/                   # Documentation - The Archives
 ```
 
-## ⚔️ Wielding XFG-Winterfell's Power
+## ⚔️ Wielding XFG-STARK's Power
 
 ### Basic Field Operations
 
@@ -164,7 +165,7 @@ let proof = StarkProof {
 };
 ```
 
-## 🧪 Testing the Citadel's Defenses
+## 🆒☑️ Testing Winterfell's Defenses
 
 ### Run All Tests
 
@@ -194,7 +195,7 @@ cargo test secret
 cargo bench
 ```
 
-## 📜 The Winterfell Archives
+## 📜 The Library Tower
 
 ### API Documentation
 
@@ -206,7 +207,7 @@ cargo doc --open
 
 ### Mathematical Background
 
-The implementation is based on:
+This implementation is based on:
 
 - **[STARK Proofs](https://eprint.iacr.org/2018/046.pdf&ved=2ahUKEwjftqeb0sqPAxXAM2IAHR3DMWsQFnoECCEQAQ&usg=AOvVaw3U0RHxBdGk62bzwjc2PIju)**: Scalable Transparent Arguments of Knowledge - The ancient magic of the North
 - **[Field Arithmetic](https://www.anubhavprasadsharma.com/files/Sharma_FiniteFieldArithmeticAndItsApplicationsToCryptography.pdf&ved=2ahUKEwiH6eHq0sqPAxXvFVkFHZDMDiMQFnoECBcQAQ&usg=AOvVaw14hLfV867hrCUdFhfS-eJg)**: Finite field operations for cryptographic security - The foundation of Winterfell
@@ -217,9 +218,9 @@ The implementation is based on:
 
 - **[Winterfell by Meta](https://github.com/facebook/winterfell)**: cryptographic primitives and STARK implementation patterns
 
-## 🧑‍💻 Joining the Citadel
+## 🧑‍💻 Join the Citadel
 
-We welcome new maesters to xfgwin! Please see Archmæster or our [How to become a mæster](https://github.com/ColinRitman/xfgwin/pulls) for details.
+We welcome new maesters to xfgwin! Please see Archmæster or [How to become a mæster](https://github.com/usexfg) for details.
 ## 🔗 Links
 
 - [Repository](https://github.com/ColinRitman/xfgwin)
@@ -233,4 +234,4 @@ We welcome new maesters to xfgwin! Please see Archmæster or our [How to become 
 
 **<sub>2025 © USEXFG</sub>**
 
-<sub>Winter is coming</sub>
+<sub><sup>Winter Is Coming</sup></sub>
