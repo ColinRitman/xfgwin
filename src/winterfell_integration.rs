@@ -20,7 +20,7 @@ use winterfell::FieldExtension;
 use crate::{
     types::{
         field::PrimeField64,
-        stark::{StarkProof, ExecutionTrace, Air, StarkError, FriProof, ProofMetadata},
+        stark::{StarkProof, ExecutionTrace, Air, StarkError, FriProof, ProofMetadata, Commitments},
         FieldElement as XfgFieldElement,
     },
     Result, XfgStarkError,
@@ -164,9 +164,7 @@ impl WinterfellTraceTable {
             self.data[row][col] = value;
             Ok(())
         } else {
-            Err(XfgStarkError::StarkError(StarkError::InvalidTrace(
-                format!("Invalid position: ({}, {})", row, col)
-            )))
+            Err(XfgStarkError::StarkError(StarkError::InvalidProof))
         }
     }
     
@@ -261,12 +259,8 @@ impl XfgWinterfellProver {
         Ok(StarkProof {
             trace: trace.clone(),
             air: air.clone(),
-            commitments: vec![],
-            fri_proof: FriProof {
-                layers: vec![],
-                final_polynomial: vec![],
-                queries: vec![],
-            },
+            commitments: Commitments::new(),
+            fri_proof: FriProof::new(),
             metadata: ProofMetadata {
                 version: 1,
                 security_parameter: 128,
@@ -507,15 +501,7 @@ mod tests {
             num_registers: 1,
         };
         
-        let air = Air {
-            constraints: vec![],
-            transition: crate::types::stark::TransitionFunction {
-                coefficients: vec![vec![PrimeField64::new(1)]],
-                degree: 1,
-            },
-            boundary: crate::types::stark::BoundaryConditions { constraints: vec![] },
-            security_parameter: 128,
-        };
+        let air = Air::new();
         
         // This should succeed and return a placeholder proof
         let result = prover.prove(&trace, &air);
@@ -536,27 +522,14 @@ mod tests {
             num_registers: 1,
         };
         
-        let air = Air {
-            constraints: vec![],
-            transition: crate::types::stark::TransitionFunction {
-                coefficients: vec![vec![PrimeField64::new(1)]],
-                degree: 1,
-            },
-            boundary: crate::types::stark::BoundaryConditions { constraints: vec![] },
-            security_parameter: 128,
-        };
+        let air = Air::new();
         
         let proof = StarkProof {
             trace: trace.clone(),
             air: air.clone(),
-            commitments: vec![],
-            fri_proof: crate::types::stark::FriProof {
-                layers: vec![],
-                final_polynomial: vec![],
-
-                queries: vec![],
-            },
-            metadata: crate::types::stark::ProofMetadata {
+            commitments: Commitments::new(),
+            fri_proof: FriProof::new(),
+            metadata: ProofMetadata {
                 version: 1,
                 security_parameter: 128,
                 field_modulus: "0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47".to_string(),
@@ -594,14 +567,14 @@ mod tests {
         
         // Test proof options
         let default_options = ProofOptions::new(
-            16,    // blowup factor (must be <= 16)
-            8,     // grinding factor
-            4,     // hash function
+            4,     // blowup factor (must be <= 16)
+            4,     // grinding factor
+            1,     // hash function
             FieldExtension::None, // field extension
-            128,   // security level
-            0,     // num queries
+            64,    // security level
+            16,    // num queries
         );
-        let custom_options = utils::custom_proof_options(16, 8, 4, 128);
+        let custom_options = utils::custom_proof_options(4, 4, 1, 64);
         
         // Verify options were created successfully
         assert!(std::mem::size_of_val(&default_options) > 0);
