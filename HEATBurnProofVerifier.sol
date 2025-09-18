@@ -13,8 +13,9 @@ import "./interfaces/IEldernodeVerifier.sol"; // ↖️ Eldernode verification i
  * @dev Verifies XFG burn proofs and mints HEAT tokens on Arbitrum
  * @dev Only this contract can mint HEAT tokens through burn proof verification
  * @dev Standardized burn amount: 0.8 XFG = 8M HEAT
- * @dev Privacy-focused: No address restrictions, recommend new addresses per claim
- * @dev Multi-layer validation: STARK proof + Eldernode consensus verification
+ * @dev Large burn amount: 800 XFG = 8B HEAT
+ * @dev Privacy-focused: Recommend new addresses per claim
+ * @dev Multi-layer validation: STARK proof + Elderfier consensus verification
  */
 contract HEATBurnProofVerifier is Ownable, Pausable, ReentrancyGuard {
     
@@ -86,7 +87,7 @@ contract HEATBurnProofVerifier is Ownable, Pausable, ReentrancyGuard {
     uint256 public constant FUEGO_NETWORK_ID = 93385046440755750514194170694064996624;
     
     /// @dev Minimum Eldernode consensus threshold (e.g., 3 out of 5)
-    uint64 public constant MIN_ELDERNODE_CONSENSUS = 3;
+    uint64 public constant MIN_ELDERNODE_CONSENSUS = 3;   // todo: add new F3 tiers - FastPass (2/2), Fallback (4/5), Full Quorum (8/10)
     
     /// @dev Whether Eldernode verification is required (can be disabled for testing)
     bool public eldernodeVerificationRequired = true;
