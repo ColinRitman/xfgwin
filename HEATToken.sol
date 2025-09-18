@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * @dev Fuego Ξmbers (HEAT) token minted on Arbitrum by burning XFG on Fuego
  * @dev Only the HEATBurnProofVerifier can mint new tokens
  * @dev Standardized burn amount: 0.8 XFG = 8M HEAT
+ * @dev Large burn amount: 800 XFG = 8 Billion HEAT
  * @dev Also serves as gas token for CODL3 rollup
  */
 contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
@@ -48,7 +49,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
     /// @dev Total HEAT burned (user burns)
     uint256 public totalBurned;
     
-    /// @dev Total HEAT collected for CODL3 gas fees (20% total to treasury)
+    /// @dev Total HEAT collected for CODL3 gas fees (20% total to COLDIGM treasury)
     uint256 public totalCollectedForGas;
     
     /// @dev Total HEAT burned for CODL3 gas fees (no longer used - all fees go to treasury)
@@ -62,13 +63,13 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
     uint256 public constant BACKSTOP_MAX_SUPPLY = 69_000_000_000_000 * 10**18;
     
     /// @dev Standardized XFG burn amount (0.8 XFG)
-    uint256 public constant STANDARDIZED_XFG_BURN = 800_000; // 0.8 XFG in smallest units
+    uint256 public constant STANDARDIZED_XFG_BURN = 8_000_000; // 0.8 XFG in atomic units
     
     /// @dev Standardized HEAT mint amount (8M HEAT)
     uint256 public constant STANDARDIZED_HEAT_MINT = 8_000_000 * 10**18;
     
     /// @dev Large XFG burn amount (800 XFG)
-    uint256 public constant LARGE_XFG_BURN = 8_000_000_000; // 800 XFG in smallest units
+    uint256 public constant LARGE_XFG_BURN = 8_000_000_000; // 800 XFG in atomic units
     
     /// @dev Large HEAT mint amount (8B HEAT)
     uint256 public constant LARGE_HEAT_MINT = 8_000_000_000 * 10**18;
@@ -99,7 +100,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
     /**
      * @dev Mint HEAT tokens from XFG burn proof verification
      * @param to Recipient of the HEAT tokens
-     * @param amount Amount of HEAT to mint (8M HEAT for 0.8 XFG burn or 80B HEAT for 800 XFG burn)
+     * @param amount Amount of HEAT to mint (8M HEAT for 0.8 XFG burn or 8 Billion HEAT for 800 XFG burn)
      */
     function mintFromBurnProof(address to, uint256 amount) 
         external 
@@ -111,7 +112,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
         require(amount > 0, "Amount must be greater than 0");
         require(
             amount == STANDARDIZED_HEAT_MINT || amount == LARGE_HEAT_MINT,
-            "Amount must be 8M HEAT (0.8 XFG) or 80B HEAT (800 XFG)"
+            "Amount must be 8M HEAT (0.8 XFG) or 8 Billion HEAT (800 XFG)"
         );
         require(totalSupply() + amount <= BACKSTOP_MAX_SUPPLY, "Would exceed backstop max supply");
         
@@ -143,7 +144,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
     /**
      * @dev Mint HEAT tokens from L2 verification via Arbitrum bridge
      * @dev Only callable by Arbitrum's Outbox contract
-     * @param commitment Commitment from STARK proof (prevents replay)
+     * @param commitment Commitment from XFG STARK proof (prevents replay)
      * @param recipient Address to receive HEAT tokens
      * @param amount Amount of HEAT to mint
      * @param version Commitment format version (for future upgrades)
@@ -160,7 +161,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
         require(amount > 0, "Amount must be greater than 0");
         require(
             amount == STANDARDIZED_HEAT_MINT || amount == LARGE_HEAT_MINT,
-            "Amount must be 8M HEAT (0.8 XFG) or 80B HEAT (800 XFG)"
+            "Amount must be 8M HEAT (0.8 XFG) or 8 Billion HEAT (800 XFG)"
         );
         require(totalSupply() + amount <= BACKSTOP_MAX_SUPPLY, "Would exceed backstop max supply");
         require(version == 1, "Unsupported commitment version");
@@ -243,10 +244,10 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
         require(balanceOf(from) >= totalAmount, "Insufficient balance");
         
         // Calculate fee distribution
-        uint256 treasuryAmount = (totalAmount * 20) / 100; // 20% to treasury
-        uint256 minerAmount = totalAmount - treasuryAmount; // 80% to miners
+        uint256 treasuryAmount = (totalAmount * 20) / 100; // 20% to COLDIGM treasury
+        uint256 minerAmount = totalAmount - treasuryAmount; // 80% to validators & miners
         
-        // Transfer 20% to treasury
+        // Transfer 20% to COLDIGM treasury
         _transfer(from, codl3Treasury, treasuryAmount);
         totalCollectedForGas += treasuryAmount;
         emit HEATCollectedForGas(from, treasuryAmount, block.timestamp);
@@ -261,7 +262,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
      * @param from Address to collect HEAT from
      * @param spender Address that has allowance
      * @param totalAmount Total amount of HEAT for gas fees
-     * @dev 20% to treasury, 80% to miners/validators
+     * @dev 20% to COLDIGM treasury, 80% to miners/validators
      */
     function collectForCODL3GasFrom(address from, address spender, uint256 totalAmount) 
         external 
@@ -280,7 +281,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
         // Spend allowance for the total amount
         _spendAllowance(from, spender, totalAmount);
         
-        // Transfer 20% to treasury
+        // Transfer 20% to COLDIGM treasury
         _transfer(from, codl3Treasury, treasuryAmount);
         totalCollectedForGas += treasuryAmount;
         emit HEATCollectedForGas(from, treasuryAmount, block.timestamp);
@@ -414,7 +415,7 @@ contract EmbersTokenHEAT is ERC20, Ownable, Pausable, ReentrancyGuard {
     }
     
     /**
-     * @dev Check if an address is the current CODL3 treasury
+     * @dev Check if an address is the current CODL3 treasury (COLDIGM)
      * @param addr Address to check
      * @return True if address is the CODL3 treasury
      */
